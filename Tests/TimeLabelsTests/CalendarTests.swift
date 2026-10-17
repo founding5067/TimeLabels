@@ -104,3 +104,58 @@ import Foundation
     #expect(TimeLabel.dateLabel(ago(2 * 3600), now: fixedDate, calendar: tokyo, relativeDays: true) == "Yesterday")
     #expect(TimeLabel.dateLabel(ago(2 * 3600), now: fixedDate, calendar: utcCalendar(), relativeDays: true) == "")
 }
+
+// MARK: - DST and calendar edge cases
+
+@Test func dateLabel_springForwardDayIsStillAdjacent() {
+    // 2021-03-14 is a 23-hour day in New York (clocks jump 2:00 -> 3:00), so
+    // "yesterday at noon" is only 23 real hours away. Days are counted on the
+    // calendar, not as 24-hour blocks.
+    let ny = calendar("America/New_York")
+    let now = makeDate(2021, 3, 14, 12, 0, in: ny)
+    let yesterdayNoon = makeDate(2021, 3, 13, 12, 0, in: ny)
+    let tomorrowNoon = makeDate(2021, 3, 15, 12, 0, in: ny)
+    #expect(now.timeIntervalSince(yesterdayNoon) == 23 * 3600)
+    #expect(TimeLabel.dateLabel(yesterdayNoon, now: now, calendar: ny, relativeDays: true) == "Yesterday")
+    #expect(TimeLabel.dateLabel(tomorrowNoon, now: now, calendar: ny) == "Tomorrow")
+    #expect(TimeLabel.dateLabel(tomorrowNoon, now: now, calendar: ny, relativeDays: true) == "Tomorrow")
+}
+
+@Test func dateLabel_fallBackDayIsOneDay() {
+    // 2021-11-07 is a 25-hour day in New York; both ends of it are "today".
+    let ny = calendar("America/New_York")
+    let now = makeDate(2021, 11, 7, 23, 30, in: ny)
+    let early = makeDate(2021, 11, 7, 0, 30, in: ny)
+    #expect(TimeLabel.dateLabel(early, now: now, calendar: ny) == "")
+    #expect(TimeLabel.dateLabel(early, now: now, calendar: ny, relativeDays: true) == "")
+    // Just across midnight on either side is tomorrow / yesterday.
+    let nextDay = makeDate(2021, 11, 8, 0, 15, in: ny)
+    let previousDay = makeDate(2021, 11, 6, 23, 45, in: ny)
+    #expect(TimeLabel.dateLabel(nextDay, now: now, calendar: ny) == "Tomorrow")
+    #expect(TimeLabel.dateLabel(nextDay, now: now, calendar: ny, relativeDays: true) == "Tomorrow")
+    #expect(TimeLabel.dateLabel(previousDay, now: now, calendar: ny, relativeDays: true) == "Yesterday")
+}
+
+@Test func dateLabel_yearBoundary() {
+    let utc = utcCalendar()
+    let newYearsEve = makeDate(2020, 12, 31, 20, 0, in: utc)
+    let newYearsDay = makeDate(2021, 1, 1, 9, 0, in: utc)
+    #expect(TimeLabel.dateLabel(newYearsDay, now: newYearsEve, calendar: utc) == "Tomorrow")
+    #expect(TimeLabel.dateLabel(newYearsEve, now: newYearsDay, calendar: utc, relativeDays: true) == "Yesterday")
+    // Jan 1 2021 was a Friday: two days on is Sunday, two days back is Wednesday.
+    #expect(TimeLabel.dateLabel(makeDate(2021, 1, 3, 9, 0, in: utc), now: newYearsDay, calendar: utc, relativeDays: true) == "Sunday")
+    #expect(TimeLabel.dateLabel(makeDate(2020, 12, 30, 9, 0, in: utc), now: newYearsDay, calendar: utc, relativeDays: true) == "Wednesday")
+}
+
+@Test func dateLabel_leapDay() {
+    let utc = utcCalendar()
+    // 2020 is a leap year: Feb 29 exists and Mar 1 is two days after Feb 28.
+    let feb28 = makeDate(2020, 2, 28, 10, 0, in: utc)
+    #expect(TimeLabel.dateLabel(makeDate(2020, 2, 29, 10, 0, in: utc), now: feb28, calendar: utc) == "Tomorrow")
+    let mar1 = makeDate(2020, 3, 1, 10, 0, in: utc)
+    #expect(TimeLabel.dateLabel(mar1, now: feb28, calendar: utc) == "Mar 1, 2020")
+    #expect(TimeLabel.dateLabel(mar1, now: feb28, calendar: utc, relativeDays: true) == "Sunday")
+    // 2021 is not: Mar 1 directly follows Feb 28.
+    let feb28b = makeDate(2021, 2, 28, 10, 0, in: utc)
+    #expect(TimeLabel.dateLabel(makeDate(2021, 3, 1, 10, 0, in: utc), now: feb28b, calendar: utc) == "Tomorrow")
+}

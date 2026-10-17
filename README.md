@@ -1,5 +1,8 @@
 # TimeLabels
 
+[![CI](https://github.com/founding5067/TimeLabels/actions/workflows/test.yml/badge.svg)](https://github.com/founding5067/TimeLabels/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/github/license/founding5067/TimeLabels)](LICENSE)
+
 Reusable date/time **formatting** helpers for Swift. Turns raw `Date`s and
 time intervals into the short, human-readable strings you want to show in a
 UI — "In 2h", "5mins ago", "3:30 PM", "Tomorrow" — without duplicating
@@ -32,7 +35,7 @@ Add the package as a dependency in your `Package.swift`, then resolve it.
 
 1. **File > Add Package Dependencies...**
 2. Enter the repository URL: `https://github.com/founding5067/TimeLabels`
-3. Choose **Dependency Rule: Up to Next Major Version** starting at `1.0.0`
+3. Choose **Dependency Rule: Up to Next Major Version** starting at `1.1.0`
 
 ### Swift Package Manager (command line)
 
@@ -40,7 +43,7 @@ Add the package to the `dependencies` array in your `Package.swift`, and the
 product to your target's dependencies:
 
 ```swift
-.package(url: "https://github.com/founding5067/TimeLabels", from: "1.0.0")
+.package(url: "https://github.com/founding5067/TimeLabels", from: "1.1.0")
 ```
 
 ```swift
@@ -112,7 +115,7 @@ TimeLabel.timeAgo(now.addingTimeInterval(-300), now: now) // "5mins ago"
 | `timeRemaining` | `static func timeRemaining(_ seconds: TimeInterval, expand: Bool = false, space: Bool = false, spellNumber: Bool = false) -> String` | `"In 30mins"` / `"In 2h"` (or `"In 30minutes"` / `"In 2hours"` with `expand: true`; or `"In 30 mins"` / `"In 2 h"` with `space: true`; or `"In 30 minutes"` / `"In 2 hours"` with `expand: true, space: true`) |
 | `timeAgo` | `static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false) -> String` | `"Just now"` / `"5mins ago"` / `"3h ago"` / a medium-style date for future dates (or `"5minutes ago"` / `"3hours ago"` with `expand: true`; or `"5 mins ago"` / `"3 h ago"` with `space: true`; or `"5 minutes ago"` / `"3 hours ago"` with `expand: true, space: true`) |
 | `relative` | `static func relative(_ date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour) -> String` | `"In 5mins"` (future) / `"5mins ago"` (past) / `"Now"` / `"Just now"` |
-| `duration` | `static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expand: Bool = false, space: Bool = false) -> String` | `"1h 30m"` (`.compact`) / `"1:30:00"` (`.countdown`) |
+| `duration` | `static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, largestUnit: Unit = .hour) -> String` | `"1h 30m"` (`.compact`) / `"1:30:00"` (`.countdown`) |
 | `time` | `static func time(_ date: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | Short clock time, e.g. `"3:30 PM"` (or `"15:30"` with `use24Hour: true`) |
 | `dateLabel` | `static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `relativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days) |
 
@@ -185,6 +188,19 @@ TimeLabel.duration(5400, expand: true, space: true)       // "1 hour 30 minutes"
 TimeLabel.duration(5400, style: .countdown)               // "1:30:00"
 TimeLabel.duration(245, style: .countdown)                // "4:05"
 ```
+
+Long durations stay in hours by default. Raise `largestUnit` (up to `.week`) to
+roll them up, and use `spellNumber` to spell the counts:
+
+```swift
+TimeLabel.duration(100_000)                               // "27h 46m 40s"
+TimeLabel.duration(100_000, largestUnit: .day)            // "1d 3h 46m 40s"
+TimeLabel.duration(100_000, expand: true, space: true, largestUnit: .day)
+                                                          // "1 day 3 hours 46 minutes 40 seconds"
+TimeLabel.duration(5400, space: true, spellNumber: true)  // "one h thirty m"
+```
+
+`.countdown` ignores `expand`, `space`, `spellNumber` and `largestUnit`.
 
 ## Yesterday and weekdays
 

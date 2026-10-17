@@ -254,3 +254,17 @@ private func timeAgo_permutations(_ c: Case) {
     #expect(TimeLabel.relative(.distantFuture, now: fixedDate).hasPrefix("In "))
     #expect(TimeLabel.relative(.distantPast, now: fixedDate).hasSuffix("h ago"))
 }
+
+// MARK: - DST
+
+@Test func timeAgo_isPureArithmeticAcrossDST() {
+    // Across New York's spring-forward, "yesterday at noon" is only 23 real
+    // hours earlier. timeAgo counts elapsed time, not wall-clock days.
+    let ny = calendar("America/New_York")
+    let now = makeDate(2021, 3, 14, 12, 0, in: ny)
+    let before = makeDate(2021, 3, 13, 12, 0, in: ny)
+    #expect(TimeLabel.timeAgo(before, now: now, calendar: ny) == "23h ago")
+    #expect(TimeLabel.timeAgo(now.addingTimeInterval(-86_400), now: now, calendar: ny) == "24h ago")
+    #expect(TimeLabel.timeAgo(now.addingTimeInterval(-86_400), now: now, calendar: ny, largestUnit: .day) == "1d ago")
+    #expect(TimeLabel.timeAgo(before, now: now, calendar: ny, largestUnit: .day) == "23h ago")
+}
