@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   macos:
     runs-on: macos-15
@@ -20,6 +24,24 @@ jobs:
 
       - name: Test
         run: swift test
+
+  # Build-only: confirms the package compiles for every platform Package.swift
+  # declares. Tests already run on macOS and Linux above.
+  apple-platforms:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        destination:
+          - generic/platform=iOS
+          - generic/platform=watchOS
+          - generic/platform=tvOS
+          - generic/platform=visionOS
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (${{ matrix.destination }})
+        run: xcodebuild build -scheme TimeLabels -destination "${{ matrix.destination }}"
 
   linux:
     runs-on: ubuntu-latest

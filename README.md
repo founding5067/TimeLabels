@@ -9,8 +9,12 @@ UI — "In 2h", "5mins ago", "3:30 PM", "Tomorrow" — without duplicating
 
 - `timeRemaining(_:)` — time **until** an event ("In 30mins" / "In 2h")
 - `timeAgo(_:)` — time **since** an event ("Just now" / "5mins ago" / a date)
-- `time(_:)` — short clock time ("3:30 PM")
-- `dateLabel(_:)` — contextual date label ("" for today, "Tomorrow", else "Jun 20, 2026")
+- `relative(_:)` — picks "In 5mins" or "5mins ago" automatically
+- `duration(_:)` — a plain length of time ("1h 30m", or timer-style "1:30:00")
+- `time(_:)` — short clock time ("3:30 PM", or "15:30" with `use24Hour: true`)
+- `dateLabel(_:)` — contextual date label ("" for today, "Tomorrow", else "Jun 20, 2026"; with `relativeDays: true` also "Yesterday" and weekday names)
+- Seconds, days and weeks via `smallestUnit:` / `largestUnit:` ("30s ago", "3d ago", "2w ago")
+- `Date` extensions (`date.timeAgo()`, `date.relative()`, ...) and a self-updating SwiftUI `TimeLabelText`
 - Thread-safe: no shared mutable state (each call builds its own formatter)
 - Deterministic output: a fixed `en_US_POSIX` locale and pattern so results don't drift with the device locale or OS version
 - Testable: `timeAgo` and `dateLabel` take a `now:` parameter
@@ -18,7 +22,7 @@ UI — "In 2h", "5mins ago", "3:30 PM", "Tomorrow" — without duplicating
 ## Requirements
 
 - Swift 6.0+
-- iOS 16+, macOS 13+, watchOS 9+, tvOS 16+, visionOS 1+ (CI also builds on Linux)
+- iOS 16+, macOS 13+, watchOS 9+, tvOS 16+, visionOS 1+ (CI builds every Apple platform and tests on macOS and Linux)
 
 ## Installation
 
@@ -107,8 +111,13 @@ TimeLabel.timeAgo(now.addingTimeInterval(-300), now: now) // "5mins ago"
 | --- | --- | --- |
 | `timeRemaining` | `static func timeRemaining(_ seconds: TimeInterval, expand: Bool = false, space: Bool = false, spellNumber: Bool = false) -> String` | `"In 30mins"` / `"In 2h"` (or `"In 30minutes"` / `"In 2hours"` with `expand: true`; or `"In 30 mins"` / `"In 2 h"` with `space: true`; or `"In 30 minutes"` / `"In 2 hours"` with `expand: true, space: true`) |
 | `timeAgo` | `static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false) -> String` | `"Just now"` / `"5mins ago"` / `"3h ago"` / a medium-style date for future dates (or `"5minutes ago"` / `"3hours ago"` with `expand: true`; or `"5 mins ago"` / `"3 h ago"` with `space: true`; or `"5 minutes ago"` / `"3 hours ago"` with `expand: true, space: true`) |
-| `time` | `static func time(_ date: Date, calendar: Calendar = .current) -> String` | Short clock time, e.g. `"3:30 PM"` |
-| `dateLabel` | `static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` |
+| `relative` | `static func relative(_ date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour) -> String` | `"In 5mins"` (future) / `"5mins ago"` (past) / `"Now"` / `"Just now"` |
+| `duration` | `static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expand: Bool = false, space: Bool = false) -> String` | `"1h 30m"` (`.compact`) / `"1:30:00"` (`.countdown`) |
+| `time` | `static func time(_ date: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | Short clock time, e.g. `"3:30 PM"` (or `"15:30"` with `use24Hour: true`) |
+| `dateLabel` | `static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `relativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days) |
+
+`timeRemaining` and `timeAgo` also take `smallestUnit:` and `largestUnit:`
+(see **Units**).
 
 ## Short, spaced, or expanded words
 
@@ -140,6 +149,76 @@ TimeLabel.timeAgo(someDate, expand: true, space: true) // "5 minutes ago"
 (`"In twenty-fivemins"`); like `expand`, it never adds a space, so combine it
 with `space: true` for `"In twenty-five mins"`.
 
+## Units: seconds, days and weeks
+
+`timeRemaining`, `timeAgo` and `relative` accept `smallestUnit:` and
+`largestUnit:` (`TimeLabel.Unit`: `.second`, `.minute`, `.hour`, `.day`,
+`.week`). The label uses the largest unit in that range that fits at least
+once. The defaults (`.minute` ... `.hour`) match the original output, so
+existing code is unaffected.
+
+```swift
+TimeLabel.timeAgo(threeDaysAgo)                       // "72h ago" (default)
+TimeLabel.timeAgo(threeDaysAgo, largestUnit: .day)    // "3d ago"
+TimeLabel.timeAgo(threeDaysAgo, expand: true, space: true, largestUnit: .day) // "3 days ago"
+TimeLabel.timeAgo(thirtySecondsAgo, smallestUnit: .second) // "30s ago"
+TimeLabel.timeRemaining(45, smallestUnit: .second)    // "In 45s"
+```
+
+## Relative labels
+
+`relative` chooses the direction for you, so a countdown that passes zero
+doesn't get stuck on "In 0mins":
+
+```swift
+TimeLabel.relative(eventDate)  // "In 5mins" before the event, "5mins ago" after
+TimeLabel.relative(eventDate, smallestUnit: .second) // "In 30s" / "Now" / "Just now"
+```
+
+## Durations
+
+`duration` formats a plain length of time with no "In" or "ago":
+
+```swift
+TimeLabel.duration(5400)                                  // "1h 30m"
+TimeLabel.duration(5400, expand: true, space: true)       // "1 hour 30 minutes"
+TimeLabel.duration(5400, style: .countdown)               // "1:30:00"
+TimeLabel.duration(245, style: .countdown)                // "4:05"
+```
+
+## Yesterday and weekdays
+
+```swift
+TimeLabel.dateLabel(yesterday, relativeDays: true)        // "Yesterday"
+TimeLabel.dateLabel(threeDaysAgo, relativeDays: true)     // "Wednesday"
+TimeLabel.dateLabel(twoWeeksAgo, relativeDays: true)      // "Jun 6, 2026"
+TimeLabel.time(Date(), use24Hour: true)                   // "15:30"
+```
+
+## Date extensions
+
+Every function has a `Date` shortcut that forwards to `TimeLabel`:
+
+```swift
+post.date.timeAgo()                // TimeLabel.timeAgo(post.date)
+event.date.relative()              // TimeLabel.relative(event.date)
+event.date.timeLabel()             // TimeLabel.time(event.date)
+event.date.dateLabel()             // TimeLabel.dateLabel(event.date)
+```
+
+## SwiftUI: self-updating labels
+
+`TimeLabelText` (available wherever SwiftUI is) re-renders on its own, so
+"Just now" becomes "1min ago" without any timer code:
+
+```swift
+TimeLabelText(relativeTo: event.date)                       // refreshes every minute
+TimeLabelText(relativeTo: event.date, smallestUnit: .second) // refreshes every second
+TimeLabelText(refresh: 30) { now in                         // any label you like
+    TimeLabel.timeAgo(post.date, now: now, largestUnit: .day)
+}
+```
+
 ## Behavior Notes
 
 - **Invalid durations.** `timeRemaining` treats negative and NaN input as 0 and
@@ -158,14 +237,14 @@ with `space: true` for `"In twenty-five mins"`.
 
 ## Testing
 
-Unit tests cover all four functions, using fixed dates and calendars. Run them with:
+Unit tests cover every function, using fixed dates and calendars. Run them with:
 
 ```sh
 swift test
 ```
 
-> Tests use the `swift-testing` framework. With a command-line-only toolchain
-> you may see `plugin for module TestingMacros not found`; run the tests from
+> Tests use the `swift-testing` framework. If a command-line-only toolchain
+> reports `plugin for module TestingMacros not found`, run the tests from
 > Xcode (or a full Xcode toolchain) instead.
 
 ## License
