@@ -6,6 +6,8 @@ import Foundation
 
 // Labels tied to the calendar and clock: "3:30 PM", "Tomorrow".
 extension TimeLabel {
+    // MARK: - Clock time
+
     /// Short 12-hour clock time, e.g. "3:30 PM" (with an AM/PM suffix). The
     /// `calendar:` parameter sets the timezone used for the reading; it defaults
     /// to the current device timezone.
@@ -17,6 +19,8 @@ extension TimeLabel {
     public static func time(_ date: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String {
         makeFormatter(use24Hour ? "HH:mm" : "h:mm a", calendar: calendar).string(from: date)
     }
+
+    // MARK: - Date label
 
     /// Empty for today, "Tomorrow" for tomorrow, otherwise the medium-style date
     /// (e.g. "Jun 20, 2026"). The `calendar:` parameter sets the timezone, which

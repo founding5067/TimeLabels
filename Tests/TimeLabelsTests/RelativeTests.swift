@@ -4,6 +4,8 @@ import Foundation
 
 // Tests for TimeLabel+Relative.swift: timeRemaining, timeAgo and relative.
 
+// MARK: - Test cases
+
 private struct Case: Sendable, CustomTestStringConvertible {
     let seconds: TimeInterval
     let expand: Bool
@@ -12,7 +14,7 @@ private struct Case: Sendable, CustomTestStringConvertible {
     var testDescription: String { "\(seconds)s expand=\(expand) space=\(space)" }
 }
 
-// ---- timeRemaining -------------------------------------------------------
+// MARK: - timeRemaining
 
 private let remainingCases: [Case] = [
     // Minutes, plural.
@@ -69,7 +71,7 @@ private func timeRemaining_permutations(_ c: Case) {
     #expect(TimeLabel.timeRemaining(1e15).hasSuffix("h"))
 }
 
-// ---- spellNumber ---------------------------------------------------------
+// MARK: - spellNumber
 
 @Test func timeRemaining_spelledNumber() {
     // spellNumber spells the NUMBER but keeps the unit compact, and does NOT
@@ -97,7 +99,7 @@ private func timeRemaining_permutations(_ c: Case) {
     #expect(TimeLabel.timeRemaining(1000 * 3600, expand: true, space: true, spellNumber: true) == "In one thousand hours")
 }
 
-// ---- timeAgo -------------------------------------------------------------
+// MARK: - timeAgo
 
 private let agoCases: [Case] = [
     Case(seconds: 300, expand: false, space: false, expected: "5mins ago"),
@@ -173,7 +175,7 @@ private func timeAgo_permutations(_ c: Case) {
     #expect(TimeLabel.timeAgo(ago(1000 * 3600), now: now, expand: true, space: true, spellNumber: true) == "one thousand hours ago")
 }
 
-// ---- Units: days and weeks ----------------------------------------------
+// MARK: - Units: days and weeks
 
 @Test func defaultsStillUseHours() {
     // Without `largestUnit`, long gaps stay in hours exactly as before.
@@ -207,7 +209,7 @@ private func timeAgo_permutations(_ c: Case) {
     #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, space: true, spellNumber: true, largestUnit: .day) == "three d ago")
 }
 
-// ---- Units: seconds ------------------------------------------------------
+// MARK: - Units: seconds
 
 @Test func secondsGranularity() {
     #expect(TimeLabel.timeRemaining(45, smallestUnit: .second) == "In 45s")
@@ -232,7 +234,7 @@ private func timeAgo_permutations(_ c: Case) {
     #expect(TimeLabel.timeRemaining(.nan, smallestUnit: .second) == "In 0s")
 }
 
-// ---- relative ------------------------------------------------------------
+// MARK: - relative
 
 @Test func relative_choosesDirection() {
     #expect(TimeLabel.relative(ahead(300), now: fixedDate) == "In 5mins")

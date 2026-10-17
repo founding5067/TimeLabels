@@ -6,6 +6,8 @@ import Foundation
 
 // Labels that describe how far a moment is from now: "In 2h", "5mins ago".
 extension TimeLabel {
+    // MARK: - Time remaining
+
     /// "In 30mins" / "In 2h" — how much time is left until an event, for
     /// later today. The input is a number of **seconds** (e.g. `3_600` is 1
     /// hour). This is pure arithmetic, so there is no `calendar:` parameter and
@@ -26,6 +28,8 @@ extension TimeLabel {
         let (count, unit) = components(for: clampedSeconds(seconds), smallest: smallestUnit, largest: largestUnit)
         return "In \(phrase(count: count, unit: unit, expand: expand, space: space, spellNumber: spellNumber))"
     }
+
+    // MARK: - Time ago
 
     /// "Just now" / "5mins ago" / "3h ago" — an event that has already
     /// happened. `now` defaults to the current time, and the
@@ -58,6 +62,8 @@ extension TimeLabel {
         let (count, unit) = components(for: clamped, smallest: smallestUnit, largest: largestUnit)
         return "\(phrase(count: count, unit: unit, expand: expand, space: space, spellNumber: spellNumber)) ago"
     }
+
+    // MARK: - Relative
 
     /// Picks "In 5mins" or "5mins ago" automatically from the sign of the
     /// difference between `date` and `now`. Anything shorter than one

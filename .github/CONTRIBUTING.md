@@ -33,12 +33,13 @@ We welcome contributions! However, please note:
 
 - Follow Swift naming conventions
 - Add tests for new features
-- Keep PRs focused and small
 - Include clear descriptions of changes
 
 ### Guidelines
 
-- **1 squashed commit** per PR (no history in the target branch)
+- **Commit as often as you like** on your branch. The maintainer squash-merges, so `main` gets one commit per PR and the PR title becomes its message
+- **Write a clear PR title:** short, imperative, and specific (e.g. "Add week unit to timeAgo"). The description explains *why*
+- **Keep unrelated changes in separate PRs** (a new feature, a refactor, and CI changes should be three PRs)
 - **All CI checks must pass**
 - **Documentation** must be updated for public API changes
 

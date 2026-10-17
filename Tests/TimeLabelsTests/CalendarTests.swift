@@ -4,7 +4,7 @@ import Foundation
 
 // Tests for TimeLabel+Calendar.swift: time and dateLabel.
 
-// ---- time ----------------------------------------------------------------
+// MARK: - time
 
 @Test func time_exactOutput() {
     let utc = utcCalendar()
@@ -37,7 +37,7 @@ import Foundation
     #expect(TimeLabel.time(fixedDate, calendar: utc) == "3:30 PM")
 }
 
-// ---- dateLabel -----------------------------------------------------------
+// MARK: - dateLabel
 
 @Test func dateLabel_todayIsEmpty() {
     let utc = utcCalendar()
@@ -72,7 +72,7 @@ import Foundation
     #expect(TimeLabel.dateLabel(twoHoursEarlier, now: fixedDate, calendar: tokyo) == "Jan 1, 2021")
 }
 
-// ---- dateLabel relativeDays ---------------------------------------------
+// MARK: - dateLabel relativeDays
 
 @Test func dateLabel_relativeDaysDefaultIsUnchanged() {
     let utc = utcCalendar()

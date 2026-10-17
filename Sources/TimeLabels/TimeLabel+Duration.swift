@@ -4,6 +4,8 @@
 
 import Foundation
 
+// MARK: - Duration style
+
 /// How `TimeLabel.duration(_:style:expand:space:)` lays out a length of time.
 public enum DurationStyle: Sendable {
     /// "1h 30m" / "45s" — zero parts are dropped.
@@ -13,6 +15,8 @@ public enum DurationStyle: Sendable {
 }
 
 extension TimeLabel {
+    // MARK: - Duration
+
     /// A length of time (in **seconds**) as a plain duration, with no "In" or
     /// "ago" wrapper.
     ///
@@ -46,6 +50,8 @@ extension TimeLabel {
             return words.joined(separator: " ")
         }
     }
+
+    // MARK: - Helpers
 
     // Compact durations use "m" for minutes (not "min") so "1h 30m" stays short.
     private static func compactPart(count: Int, unit: Unit, expand: Bool, space: Bool) -> String {
