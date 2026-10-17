@@ -22,7 +22,7 @@ UI — "In 2h", "5mins ago", "3:30 PM", "Tomorrow" — without duplicating
 ## Requirements
 
 - Swift 6.0+
-- iOS 16+, macOS 13+, watchOS 9+, tvOS 16+, visionOS 1+ (CI builds every Apple platform and tests on macOS and Linux)
+- iOS 16+, macOS 13+, watchOS 9+, tvOS 16+, visionOS 1+ (CI builds every Apple platform and tests on macOS, on both the oldest and newest supported Xcode, and on Linux)
 
 ## Installation
 
