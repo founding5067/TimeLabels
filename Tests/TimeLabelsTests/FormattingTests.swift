@@ -4,6 +4,8 @@ import Foundation
 
 // Tests for the internal helpers in TimeLabel+Formatting.swift.
 
+// MARK: - Spelled numbers
+
 @Test func spelledNumber_helper() {
     let expected: [(Int, String)] = [
         (0, "zero"), (1, "one"), (5, "five"), (9, "nine"),
@@ -26,6 +28,8 @@ import Foundation
     }
 }
 
+// MARK: - Formatters
+
 @Test func makeFormatterConfiguration() {
     let ny = calendar("America/New_York")
     let formatter = TimeLabel.makeFormatter("h:mm a", calendar: ny)
@@ -41,6 +45,8 @@ import Foundation
     #expect(formatter.dateFormat == "MMM d, yyyy")
     #expect(formatter.timeZone == utc.timeZone)
 }
+
+// MARK: - Plural units
 
 @Test func pluralUnit_helper() {
     #expect(TimeLabel.pluralUnit(count: 1, expanded: true, unit: .hour) == "hour")

@@ -8,6 +8,8 @@ import Foundation
 // `TimeLabel.timeAgo(date)`. Each one forwards to `TimeLabel` with the same
 // parameters and defaults; there is no extra logic here.
 extension Date {
+    // MARK: - Relative
+
     /// See `TimeLabel.timeAgo(_:now:calendar:expand:space:spellNumber:smallestUnit:largestUnit:)`.
     public func timeAgo(now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour) -> String {
         TimeLabel.timeAgo(self, now: now, calendar: calendar, expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit)
@@ -17,6 +19,8 @@ extension Date {
     public func relative(now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour) -> String {
         TimeLabel.relative(self, now: now, expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit)
     }
+
+    // MARK: - Calendar
 
     /// See `TimeLabel.time(_:calendar:use24Hour:)`.
     public func timeLabel(calendar: Calendar = .current, use24Hour: Bool = false) -> String {

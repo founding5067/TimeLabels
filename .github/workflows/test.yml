@@ -14,10 +14,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # macos-15 ships Xcode 16.4, the oldest toolchain this package supports
+  # (swift-tools-version 6.0). macos-26 ships the newest GA Xcode. Testing both
+  # catches problems at either end.
   macos:
-    runs-on: macos-15
+    name: macos (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26]
     steps:
       - uses: actions/checkout@v7
+
+      - name: Xcode version
+        run: xcodebuild -version
 
       - name: Build
         run: swift build
@@ -26,12 +37,15 @@ jobs:
         run: swift test
 
   # Build-only: confirms the package compiles for every platform Package.swift
-  # declares. Tests already run on macOS and Linux above.
+  # declares, on both the oldest and newest Xcode. Tests already run on macOS
+  # and Linux above.
   apple-platforms:
-    runs-on: macos-15
+    name: ${{ matrix.destination }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [macos-15, macos-26]
         destination:
           - generic/platform=iOS
           - generic/platform=watchOS
@@ -40,7 +54,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Build (${{ matrix.destination }})
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Build
         run: xcodebuild build -scheme TimeLabels -destination "${{ matrix.destination }}"
 
   linux:

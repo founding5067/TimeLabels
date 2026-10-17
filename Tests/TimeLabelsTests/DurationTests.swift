@@ -4,6 +4,8 @@ import Foundation
 
 // Tests for TimeLabel+Duration.swift.
 
+// MARK: - Compact
+
 @Test func duration_compact() {
     #expect(TimeLabel.duration(5400) == "1h 30m")
     #expect(TimeLabel.duration(45) == "45s")
@@ -22,6 +24,8 @@ import Foundation
     #expect(TimeLabel.duration(0, expand: true, space: true) == "0 seconds")
 }
 
+// MARK: - Countdown
+
 @Test func duration_countdown() {
     #expect(TimeLabel.duration(5400, style: .countdown) == "1:30:00")
     #expect(TimeLabel.duration(245, style: .countdown) == "4:05")
@@ -32,6 +36,8 @@ import Foundation
     // expand / space are ignored.
     #expect(TimeLabel.duration(5400, style: .countdown, expand: true, space: true) == "1:30:00")
 }
+
+// MARK: - Invalid input
 
 @Test func duration_invalidInputDoesNotTrap() {
     #expect(TimeLabel.duration(-5) == "0s")

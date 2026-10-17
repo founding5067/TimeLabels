@@ -7,9 +7,13 @@ import Foundation
 // Internal building blocks shared by the public helpers. Nothing here is part
 // of the package's public API; it is `internal` so tests can reach it.
 extension TimeLabel {
+    // MARK: - Limits
+
     // Largest duration (in seconds) the relative helpers will format. Anything
     // bigger (including `.infinity`) is clamped so `Int(...)` can never trap.
     internal static let maxSeconds: TimeInterval = 1e15
+
+    // MARK: - Date formatters
 
     // DateFormatter is cheap enough to build per call and, unlike a shared
     // instance, can't be mutated by consumers. A fixed `en_US_POSIX` locale with
@@ -32,6 +36,8 @@ extension TimeLabel {
         makeFormatter("MMM d, yyyy", calendar: calendar)
     }
 
+    // MARK: - Clamping & unit selection
+
     // NaN and negatives become 0; huge values (incl. infinity) are capped so the
     // later `Int(...)` conversion can't trap.
     internal static func clampedSeconds(_ seconds: TimeInterval) -> TimeInterval {
@@ -47,6 +53,8 @@ extension TimeLabel {
         let unit = Unit.allCases.last { $0 >= smallest && $0 <= largest && whole >= $0.seconds } ?? smallest
         return (whole / unit.seconds, unit)
     }
+
+    // MARK: - Phrase building
 
     // "<number><unit>" shared by `timeRemaining`, `timeAgo` and `relative`.
     // Spacing is the caller's choice: `expand` only swaps the compact unit for

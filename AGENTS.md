@@ -3,6 +3,7 @@
 ### Git
 - Only commit or push when the user explicitly asks in the current conversation. Never on your own initiative.
 - Never commit or push directly to `main`; work on a branch and open a PR. Never create or push tags (tags trigger a release).
+- Prefer a new commit over amending or force-pushing a branch that's already pushed. PRs are squash-merged, so extra commits are fine.
 - Read-only and local commands are always fine: `git status`, `git diff`, `git log`, file edits, builds, tests.
 - Before finishing work, summarize what you changed and ask the user how they want it committed.
 
@@ -22,6 +23,7 @@
 - Output is deterministic: `en_US_POSIX` locale + explicit `dateFormat` patterns, Gregorian calendar; `calendar:` only sets the timezone.
 - Numeric inputs go through `clampedSeconds` so NaN/negative/infinite values never trap.
 - Anything using SwiftUI/UIKit stays behind `#if canImport(...)` — CI builds on Linux.
+- Group code in Swift files with `// MARK: - Section` (not `// ----` banners) so Xcode's jump bar shows the sections. Skip it in files with only one group.
 - Public API changes need a README update (Features, API Reference, and a usage section).
 
 ### Testing

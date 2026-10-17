@@ -17,6 +17,8 @@ import Foundation
 //   TimeLabel+Duration.swift    duration
 //   TimeLabel+Formatting.swift  internal shared helpers
 public enum TimeLabel {
+    // MARK: - Unit
+
     /// A unit of time the relative helpers can report in. Use it with the
     /// `smallestUnit:` / `largestUnit:` parameters to choose the range of units a
     /// label may use. The defaults (`.minute` ... `.hour`) keep the original

@@ -4,6 +4,8 @@ import Foundation
 // a fixed "now" keep formatted output deterministic across machines and
 // timezones. All date-based assertions use UTC unless a test says otherwise.
 
+// MARK: - Calendars
+
 func utcCalendar() -> Calendar {
     var c = Calendar(identifier: .gregorian)
     c.timeZone = TimeZone(identifier: "UTC")!
@@ -15,6 +17,8 @@ func calendar(_ identifier: String) -> Calendar {
     c.timeZone = TimeZone(identifier: identifier)!
     return c
 }
+
+// MARK: - Dates
 
 // 2021-01-01 15:30:00 UTC (a Friday), used as a fixed "now" / "known" date.
 let fixedDate = Date(timeIntervalSince1970: 1_609_515_000)
