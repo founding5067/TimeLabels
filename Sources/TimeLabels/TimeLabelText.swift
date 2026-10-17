@@ -114,7 +114,7 @@ private let previewRanges: [PreviewRange] = TimeLabel.Unit.allCases.flatMap { sm
 
 // 9 days, 3 hours, 5 minutes, 20 seconds: a gap that reads differently under
 // every unit range.
-private let previewGap: TimeInterval = 9 * 86_400 + 3 * 3600 + 5 * 60 + 20
+private let previewGap: TimeInterval = 788_720 // 9*86_400 + 3*3600 + 5*60 + 20
 
 // A label for `previewNow + offset`, read at the pinned `previewNow`.
 @MainActor
