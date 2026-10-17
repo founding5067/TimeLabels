@@ -17,7 +17,7 @@ jobs:
   macos:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build
         run: swift build
@@ -38,7 +38,7 @@ jobs:
           - generic/platform=tvOS
           - generic/platform=visionOS
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build (${{ matrix.destination }})
         run: xcodebuild build -scheme TimeLabels -destination "${{ matrix.destination }}"
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build
         run: swift build
