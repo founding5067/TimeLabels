@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/founding5067/TimeLabels/actions/workflows/test.yml/badge.svg)](https://github.com/founding5067/TimeLabels/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/github/license/founding5067/TimeLabels)](LICENSE)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffounding5067%2FTimeLabels%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/founding5067/TimeLabels)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ffounding5067%2FTimeLabels%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/founding5067/TimeLabels)
+
 
 Reusable date/time **formatting** helpers for Swift. Turns raw `Date`s and
 time intervals into the short, human-readable strings you want to show in a
