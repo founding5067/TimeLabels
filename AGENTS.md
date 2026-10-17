@@ -15,7 +15,8 @@
   - `TimeLabel+Duration.swift` — `duration`
   - `TimeLabel+Formatting.swift` — internal helpers
   - `Date+TimeLabel.swift` — `Date` forwarding extensions (no logic)
-  - `TimeLabelText.swift` — SwiftUI view + `#Preview`, inside `#if canImport(SwiftUI)`
+  - `TimeLabelText.swift` — the SwiftUI view, inside `#if canImport(SwiftUI)`
+  - `TimeLabelPreviews.swift` — all SwiftUI `#Preview`s (SwiftUI + `DEBUG` only). Keep every preview in this one self-contained file (private sample data, no helpers shared across files): Xcode's canvas doesn't reliably see symbols from other files.
 - `Tests/TimeLabelsTests/`: `<Concern>Tests.swift` per source file. Shared fixtures (`fixedDate`, `utcCalendar()`, `ago`, `ahead`, `day`, `week`) live in `TestFixtures.swift`; don't redefine them.
 
 ### Conventions
