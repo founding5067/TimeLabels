@@ -2,25 +2,7 @@ import Testing
 import Foundation
 @testable import TimeLabels
 
-// Fixed reference calendar/timezone so formatted output is deterministic across
-// machines and timezones. All date-based assertions use UTC.
-private func utcCalendar() -> Calendar {
-    var c = Calendar(identifier: .gregorian)
-    c.timeZone = TimeZone(identifier: "UTC")!
-    return c
-}
-
-private func calendar(_ identifier: String) -> Calendar {
-    var c = utcCalendar()
-    c.timeZone = TimeZone(identifier: identifier)!
-    return c
-}
-
-// 2021-01-01 15:30:00 UTC, used as a fixed "now" / "known" date.
-private let fixedDate = Date(timeIntervalSince1970: 1_609_515_000)
-
-// `date` that is `seconds` before `fixedDate`.
-private func ago(_ seconds: TimeInterval) -> Date { fixedDate.addingTimeInterval(-seconds) }
+// Tests for TimeLabel+Relative.swift: timeRemaining, timeAgo and relative.
 
 private struct Case: Sendable, CustomTestStringConvertible {
     let seconds: TimeInterval
@@ -191,111 +173,82 @@ private func timeAgo_permutations(_ c: Case) {
     #expect(TimeLabel.timeAgo(ago(1000 * 3600), now: now, expand: true, space: true, spellNumber: true) == "one thousand hours ago")
 }
 
-// ---- time ----------------------------------------------------------------
+// ---- Units: days and weeks ----------------------------------------------
 
-@Test func time_exactOutput() {
-    let utc = utcCalendar()
-    #expect(TimeLabel.time(fixedDate, calendar: utc) == "3:30 PM")
-    let noon = fixedDate.addingTimeInterval(-12_600)    // 12:00 UTC
-    let midnight = fixedDate.addingTimeInterval(-55_800) // 00:00 UTC
-    #expect(TimeLabel.time(noon, calendar: utc) == "12:00 PM")
-    #expect(TimeLabel.time(midnight, calendar: utc) == "12:00 AM")
+@Test func defaultsStillUseHours() {
+    // Without `largestUnit`, long gaps stay in hours exactly as before.
+    #expect(TimeLabel.timeAgo(ago(3 * day), now: fixedDate) == "72h ago")
+    #expect(TimeLabel.timeRemaining(3 * day) == "In 72h")
 }
 
-@Test func time_usesPlainSpaceSeparator() {
-    // No narrow no-break space (U+202F) before AM/PM, whatever the OS ships.
-    #expect(TimeLabel.time(fixedDate, calendar: utcCalendar()).contains("\u{202F}") == false)
+@Test func timeAgo_rollsUpToDaysAndWeeks() {
+    #expect(TimeLabel.timeAgo(ago(day - 1), now: fixedDate, largestUnit: .day) == "23h ago")
+    #expect(TimeLabel.timeAgo(ago(day), now: fixedDate, largestUnit: .day) == "1d ago")
+    #expect(TimeLabel.timeAgo(ago(3 * day), now: fixedDate, largestUnit: .day) == "3d ago")
+    // With `.day` as the cap, a week-plus gap stays in days.
+    #expect(TimeLabel.timeAgo(ago(week), now: fixedDate, largestUnit: .day) == "7d ago")
+    #expect(TimeLabel.timeAgo(ago(6 * day), now: fixedDate, largestUnit: .week) == "6d ago")
+    #expect(TimeLabel.timeAgo(ago(week), now: fixedDate, largestUnit: .week) == "1w ago")
+    #expect(TimeLabel.timeAgo(ago(2 * week + day), now: fixedDate, largestUnit: .week) == "2w ago")
 }
 
-@Test func time_timezoneShiftsOutput() {
-    // 15:30 UTC is 10:30 AM EST (America/New_York is UTC-5 in January).
-    #expect(TimeLabel.time(fixedDate, calendar: calendar("America/New_York")) == "10:30 AM")
-    // 15:30 UTC + 9h = 12:30 AM next day in Asia/Tokyo.
-    #expect(TimeLabel.time(fixedDate, calendar: calendar("Asia/Tokyo")) == "12:30 AM")
+@Test func timeRemaining_rollsUpToDaysAndWeeks() {
+    #expect(TimeLabel.timeRemaining(3 * day, largestUnit: .day) == "In 3d")
+    #expect(TimeLabel.timeRemaining(2 * week, largestUnit: .week) == "In 2w")
 }
 
-// ---- dateLabel -----------------------------------------------------------
-
-@Test func dateLabel_todayIsEmpty() {
-    let utc = utcCalendar()
-    #expect(TimeLabel.dateLabel(fixedDate, now: fixedDate, calendar: utc) == "")
-    // Earlier the same day is still today.
-    #expect(TimeLabel.dateLabel(ago(12_600), now: fixedDate, calendar: utc) == "")
+@Test func dayAndWeekUnits_expandAndSpace() {
+    let threeDays = ago(3 * day)
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, space: true, largestUnit: .day) == "3 d ago")
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, expand: true, largestUnit: .day) == "3days ago")
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, expand: true, space: true, largestUnit: .day) == "3 days ago")
+    #expect(TimeLabel.timeAgo(ago(week), now: fixedDate, expand: true, space: true, largestUnit: .week) == "1 week ago")
+    #expect(TimeLabel.timeAgo(ago(2 * week), now: fixedDate, expand: true, space: true, largestUnit: .week) == "2 weeks ago")
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, space: true, spellNumber: true, largestUnit: .day) == "three d ago")
 }
 
-@Test func dateLabel_tomorrowIsLabelled() {
-    let utc = utcCalendar()
-    #expect(TimeLabel.dateLabel(fixedDate.addingTimeInterval(86_400), now: fixedDate, calendar: utc) == "Tomorrow")
-    // Late tonight (23:59 UTC) is still today; just after midnight is tomorrow.
-    let lateTonight = fixedDate.addingTimeInterval(8 * 3600 + 29 * 60)
-    #expect(TimeLabel.dateLabel(lateTonight, now: fixedDate, calendar: utc) == "")
-    #expect(TimeLabel.dateLabel(lateTonight.addingTimeInterval(120), now: fixedDate, calendar: utc) == "Tomorrow")
+// ---- Units: seconds ------------------------------------------------------
+
+@Test func secondsGranularity() {
+    #expect(TimeLabel.timeRemaining(45, smallestUnit: .second) == "In 45s")
+    #expect(TimeLabel.timeRemaining(0, smallestUnit: .second) == "In 0s")
+    #expect(TimeLabel.timeRemaining(59, space: true, smallestUnit: .second) == "In 59 s")
+    #expect(TimeLabel.timeRemaining(1, expand: true, space: true, smallestUnit: .second) == "In 1 second")
+    #expect(TimeLabel.timeRemaining(5, expand: true, space: true, smallestUnit: .second) == "In 5 seconds")
+    // Minutes still win once there is at least one.
+    #expect(TimeLabel.timeRemaining(60, smallestUnit: .second) == "In 1min")
+    #expect(TimeLabel.timeAgo(ago(30), now: fixedDate, smallestUnit: .second) == "30s ago")
+    #expect(TimeLabel.timeAgo(ago(1), now: fixedDate, smallestUnit: .second) == "1s ago")
+    #expect(TimeLabel.timeAgo(ago(0.5), now: fixedDate, smallestUnit: .second) == "Just now")
+    // Default smallest unit is unchanged.
+    #expect(TimeLabel.timeAgo(ago(30), now: fixedDate) == "Just now")
 }
 
-@Test func dateLabel_otherDaysAreFormatted() {
-    let utc = utcCalendar()
-    #expect(TimeLabel.dateLabel(fixedDate.addingTimeInterval(2 * 86_400), now: fixedDate, calendar: utc) == "Jan 3, 2021")
-    #expect(TimeLabel.dateLabel(ago(86_400), now: fixedDate, calendar: utc) == "Dec 31, 2020")
-    #expect(TimeLabel.dateLabel(ago(86_400 * 365), now: fixedDate, calendar: utc) == "Jan 2, 2020")
+@Test func unitBoundsAreSafe() {
+    // largestUnit below smallestUnit is treated as smallestUnit.
+    #expect(TimeLabel.timeRemaining(7200, smallestUnit: .hour, largestUnit: .minute) == "In 2h")
+    // Huge values clamp instead of trapping, in every unit.
+    #expect(TimeLabel.timeRemaining(.infinity, largestUnit: .week).hasSuffix("w"))
+    #expect(TimeLabel.timeRemaining(.nan, smallestUnit: .second) == "In 0s")
 }
 
-@Test func dateLabel_timezoneAffectsDetection() {
-    // 15:30 UTC on Jan 1 is already Jan 2 (00:30) in Tokyo, so for a Tokyo
-    // calendar "now" and an instant 2h earlier fall on different days.
-    let tokyo = calendar("Asia/Tokyo")
-    let utc = utcCalendar()
-    let twoHoursEarlier = ago(2 * 3600) // 13:30 UTC = 22:30 Jan 1 in Tokyo
-    #expect(TimeLabel.dateLabel(twoHoursEarlier, now: fixedDate, calendar: utc) == "")
-    #expect(TimeLabel.dateLabel(twoHoursEarlier, now: fixedDate, calendar: tokyo) == "Jan 1, 2021")
+// ---- relative ------------------------------------------------------------
+
+@Test func relative_choosesDirection() {
+    #expect(TimeLabel.relative(ahead(300), now: fixedDate) == "In 5mins")
+    #expect(TimeLabel.relative(ago(300), now: fixedDate) == "5mins ago")
+    #expect(TimeLabel.relative(ahead(2 * 3600), now: fixedDate, expand: true, space: true) == "In 2 hours")
+    #expect(TimeLabel.relative(ago(2 * 3600), now: fixedDate, expand: true, space: true) == "2 hours ago")
+    #expect(TimeLabel.relative(ahead(3 * day), now: fixedDate, largestUnit: .day) == "In 3d")
+    #expect(TimeLabel.relative(ago(3 * day), now: fixedDate, largestUnit: .day) == "3d ago")
 }
 
-// ---- Internal helpers (visible via @testable) ----------------------------
-
-@Test func spelledNumber_helper() {
-    let expected: [(Int, String)] = [
-        (0, "zero"), (1, "one"), (5, "five"), (9, "nine"),
-        (10, "ten"), (11, "eleven"), (15, "fifteen"), (19, "nineteen"), (20, "twenty"),
-        (24, "twenty-four"), (25, "twenty-five"), (59, "fifty-nine"), (99, "ninety-nine"),
-        (60, "sixty"), (100, "one hundred"), (300, "three hundred"), (1000, "one thousand"),
-        (3600, "three thousand six hundred"), (100_000, "one hundred thousand"), (1_000_000, "one million"),
-    ]
-    for (value, words) in expected {
-        #expect(TimeLabel.spelledNumber(value) == words)
-    }
-}
-
-@Test func spelledNumber_neverFallsBackToDigits() {
-    // `string(for:)` is non-nil for every in-range count; sample magnitude
-    // boundaries to lock that in.
-    let samples = [0, 1, 5, 9, 10, 19, 99, 100, 999, 1_000, 9_999, 10_000, 99_999, 100_000, 999_999, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000]
-    for c in samples {
-        #expect(TimeLabel.spelledNumber(c) != String(c))
-    }
-}
-
-@Test func makeFormatterConfiguration() {
-    let ny = calendar("America/New_York")
-    let formatter = TimeLabel.makeFormatter("h:mm a", calendar: ny)
-    #expect(formatter.locale.identifier == "en_US_POSIX")
-    #expect(formatter.calendar == ny)
-    #expect(formatter.timeZone == ny.timeZone)
-    #expect(formatter.dateFormat == "h:mm a")
-}
-
-@Test func makeDateLabelFormatterConfiguration() {
-    let utc = utcCalendar()
-    let formatter = TimeLabel.makeDateLabelFormatter(calendar: utc)
-    #expect(formatter.dateFormat == "MMM d, yyyy")
-    #expect(formatter.timeZone == utc.timeZone)
-}
-
-@Test func pluralUnit_helper() {
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: true, hours: true) == "hour")
-    #expect(TimeLabel.pluralUnit(count: 2, expanded: true, hours: true) == "hours")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: true, hours: false) == "minute")
-    #expect(TimeLabel.pluralUnit(count: 30, expanded: true, hours: false) == "minutes")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: false, hours: true) == "h")
-    #expect(TimeLabel.pluralUnit(count: 2, expanded: false, hours: true) == "h")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: false, hours: false) == "min")
-    #expect(TimeLabel.pluralUnit(count: 30, expanded: false, hours: false) == "mins")
+@Test func relative_nearZero() {
+    #expect(TimeLabel.relative(fixedDate, now: fixedDate) == "Just now")
+    #expect(TimeLabel.relative(ago(30), now: fixedDate) == "Just now")
+    #expect(TimeLabel.relative(ahead(30), now: fixedDate) == "Now")
+    #expect(TimeLabel.relative(ahead(30), now: fixedDate, smallestUnit: .second) == "In 30s")
+    #expect(TimeLabel.relative(ahead(0.5), now: fixedDate, smallestUnit: .second) == "Now")
+    #expect(TimeLabel.relative(.distantFuture, now: fixedDate).hasPrefix("In "))
+    #expect(TimeLabel.relative(.distantPast, now: fixedDate).hasSuffix("h ago"))
 }

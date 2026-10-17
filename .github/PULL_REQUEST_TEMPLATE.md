@@ -12,6 +12,8 @@
 ### PR Requirements
 - [ ] Code follows Swift conventions
 - [ ] Tests are passing (`swift test`)
+- [ ] Builds for all Apple platforms (CI `apple-platforms` job)
+- [ ] README updated for public API changes
 - [ ] No breaking changes (or breaking changes are clearly documented)
 - [ ] Code is properly formatted
 

@@ -15,16 +15,9 @@ DerivedData/
 *.hmap
 *.ids
 *.xcuserstate
-sync/
-
-# CocoaPods
-Pods/
-*.xcworkspace
-!default.xcworkspace
 
 # Swift Package Manager
 .build/
-.build/reference/
 .swiftpm/
 Package.resolved
 
