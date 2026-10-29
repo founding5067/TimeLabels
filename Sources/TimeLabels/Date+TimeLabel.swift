@@ -4,25 +4,26 @@
 
 import Foundation
 
-// Convenience wrappers so call sites can write `date.timeAgo()` instead of
-// `TimeLabel.timeAgo(date)`. Each one forwards to `TimeLabel` with the same
-// parameters and defaults; there is no extra logic here.
+// Convenience wrappers so call sites can write `date.timeAgoLabel()` instead
+// of `TimeLabel.timeAgo(date)`. Each one is named after the `TimeLabel`
+// function plus "Label" and forwards to it with the same parameters and
+// defaults; there is no extra logic here.
 extension Date {
     // MARK: - Relative
 
-    /// See `TimeLabel.timeRemaining(until:now:expand:space:spellNumber:smallestUnit:largestUnit:rounding:)`.
-    public func timeRemaining(now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour, rounding: TimeLabel.Rounding = .down) -> String {
-        TimeLabel.timeRemaining(until: self, now: now, expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
+    /// See `TimeLabel.timeRemaining(until:now:expandUnits:addSpace:spellNumbers:smallestUnit:largestUnit:rounding:)`.
+    public func timeRemainingLabel(now: Date = Date(), expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour, rounding: TimeLabel.Rounding = .down) -> String {
+        TimeLabel.timeRemaining(until: self, now: now, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
     }
 
-    /// See `TimeLabel.timeAgo(_:now:calendar:expand:space:spellNumber:smallestUnit:largestUnit:rounding:)`.
-    public func timeAgo(now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour, rounding: TimeLabel.Rounding = .down) -> String {
-        TimeLabel.timeAgo(self, now: now, calendar: calendar, expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
+    /// See `TimeLabel.timeAgo(_:now:calendar:expandUnits:addSpace:spellNumbers:smallestUnit:largestUnit:rounding:)`.
+    public func timeAgoLabel(now: Date = Date(), calendar: Calendar = .current, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour, rounding: TimeLabel.Rounding = .down) -> String {
+        TimeLabel.timeAgo(self, now: now, calendar: calendar, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
     }
 
-    /// See `TimeLabel.relative(_:now:expand:space:spellNumber:smallestUnit:largestUnit:rounding:)`.
-    public func relative(now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour, rounding: TimeLabel.Rounding = .down) -> String {
-        TimeLabel.relative(self, now: now, expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
+    /// See `TimeLabel.relative(_:now:expandUnits:addSpace:spellNumbers:smallestUnit:largestUnit:rounding:)`.
+    public func relativeLabel(now: Date = Date(), expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour, rounding: TimeLabel.Rounding = .down) -> String {
+        TimeLabel.relative(self, now: now, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
     }
 
     // MARK: - Calendar
@@ -37,28 +38,13 @@ extension Date {
         TimeLabel.timeRange(self, end, calendar: calendar, use24Hour: use24Hour)
     }
 
-    /// See `TimeLabel.dateLabel(_:now:calendar:relativeDays:omitCurrentYear:nameToday:includeWeekday:abbreviateWeekday:)`.
-    public func dateLabel(now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String {
-        TimeLabel.dateLabel(self, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear, nameToday: nameToday, includeWeekday: includeWeekday, abbreviateWeekday: abbreviateWeekday)
+    /// See `TimeLabel.date(_:now:calendar:useRelativeDays:omitCurrentYear:nameToday:includeWeekday:abbreviateWeekday:)`.
+    public func dateLabel(now: Date = Date(), calendar: Calendar = .current, useRelativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String {
+        TimeLabel.date(self, now: now, calendar: calendar, useRelativeDays: useRelativeDays, omitCurrentYear: omitCurrentYear, nameToday: nameToday, includeWeekday: includeWeekday, abbreviateWeekday: abbreviateWeekday)
     }
 
-    /// See `TimeLabel.dateTime(_:now:calendar:use24Hour:relativeDays:omitCurrentYear:nameToday:includeWeekday:abbreviateWeekday:separator:datedSeparator:)`.
-    public func dateTimeLabel(now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false, separator: String = " at ", datedSeparator: String? = nil) -> String {
-        TimeLabel.dateTime(self, now: now, calendar: calendar, use24Hour: use24Hour, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear, nameToday: nameToday, includeWeekday: includeWeekday, abbreviateWeekday: abbreviateWeekday, separator: separator, datedSeparator: datedSeparator)
-    }
-
-    // MARK: - Earlier signatures
-
-    // The 1.3 forms, kept so code that stores these methods by their 1.3 type
-    // still compiles (see the matching `TimeLabel` overloads).
-
-    /// See `TimeLabel.dateLabel(_:now:calendar:relativeDays:omitCurrentYear:)`.
-    public func dateLabel(now: Date, calendar: Calendar, relativeDays: Bool, omitCurrentYear: Bool) -> String {
-        TimeLabel.dateLabel(self, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear)
-    }
-
-    /// See `TimeLabel.dateTime(_:now:calendar:use24Hour:relativeDays:omitCurrentYear:)`.
-    public func dateTimeLabel(now: Date, calendar: Calendar, use24Hour: Bool, relativeDays: Bool, omitCurrentYear: Bool) -> String {
-        TimeLabel.dateTime(self, now: now, calendar: calendar, use24Hour: use24Hour, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear)
+    /// See `TimeLabel.dateTime(_:now:calendar:use24Hour:useRelativeDays:omitCurrentYear:nameToday:includeWeekday:abbreviateWeekday:separator:datedSeparator:)`.
+    public func dateTimeLabel(now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, useRelativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false, separator: String = " at ", datedSeparator: String? = nil) -> String {
+        TimeLabel.dateTime(self, now: now, calendar: calendar, use24Hour: use24Hour, useRelativeDays: useRelativeDays, omitCurrentYear: omitCurrentYear, nameToday: nameToday, includeWeekday: includeWeekday, abbreviateWeekday: abbreviateWeekday, separator: separator, datedSeparator: datedSeparator)
     }
 }
