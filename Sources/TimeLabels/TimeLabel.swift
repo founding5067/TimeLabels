@@ -13,8 +13,8 @@ import Foundation
 // what actually exposes them to consumers of the Swift package. The helpers
 // themselves live in extensions, one file per concern:
 //   TimeLabel+Relative.swift    timeRemaining, timeAgo, relative
-//   TimeLabel+Calendar.swift    time, timeRange, dateLabel, dateTime
-//   TimeLabel+Duration.swift    duration
+//   TimeLabel+Calendar.swift    time, timeRange, date, dateTime
+//   TimeLabel+Duration.swift    DurationStyle, duration
 //   TimeLabel+Formatting.swift  internal shared helpers
 //   Date+TimeLabel.swift        `Date` forwarding extensions
 //   TimeLabelText.swift         self-refreshing SwiftUI view

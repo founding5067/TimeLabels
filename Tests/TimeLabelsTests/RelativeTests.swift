@@ -8,44 +8,44 @@ import Foundation
 
 private struct Case: Sendable, CustomTestStringConvertible {
     let seconds: TimeInterval
-    let expand: Bool
-    let space: Bool
+    let expandUnits: Bool
+    let addSpace: Bool
     let expected: String
-    var testDescription: String { "\(seconds)s expand=\(expand) space=\(space)" }
+    var testDescription: String { "\(seconds)s expandUnits=\(expandUnits) addSpace=\(addSpace)" }
 }
 
 // MARK: - timeRemaining
 
 private let remainingCases: [Case] = [
     // Minutes, plural.
-    Case(seconds: 1800, expand: false, space: false, expected: "In 30mins"),
-    Case(seconds: 1800, expand: false, space: true, expected: "In 30 mins"),
-    // `expand` only picks the word; it never forces a space.
-    Case(seconds: 1800, expand: true, space: false, expected: "In 30minutes"),
-    Case(seconds: 1800, expand: true, space: true, expected: "In 30 minutes"),
+    Case(seconds: 1800, expandUnits: false, addSpace: false, expected: "In 30mins"),
+    Case(seconds: 1800, expandUnits: false, addSpace: true, expected: "In 30 mins"),
+    // `expandUnits` only picks the word; it never forces a space.
+    Case(seconds: 1800, expandUnits: true, addSpace: false, expected: "In 30minutes"),
+    Case(seconds: 1800, expandUnits: true, addSpace: true, expected: "In 30 minutes"),
     // Minutes, singular.
-    Case(seconds: 60, expand: false, space: false, expected: "In 1min"),
-    Case(seconds: 60, expand: false, space: true, expected: "In 1 min"),
-    Case(seconds: 60, expand: true, space: false, expected: "In 1minute"),
-    Case(seconds: 60, expand: true, space: true, expected: "In 1 minute"),
+    Case(seconds: 60, expandUnits: false, addSpace: false, expected: "In 1min"),
+    Case(seconds: 60, expandUnits: false, addSpace: true, expected: "In 1 min"),
+    Case(seconds: 60, expandUnits: true, addSpace: false, expected: "In 1minute"),
+    Case(seconds: 60, expandUnits: true, addSpace: true, expected: "In 1 minute"),
     // Zero.
-    Case(seconds: 0, expand: false, space: false, expected: "In 0mins"),
-    Case(seconds: 0, expand: false, space: true, expected: "In 0 mins"),
-    Case(seconds: 0, expand: true, space: true, expected: "In 0 minutes"),
+    Case(seconds: 0, expandUnits: false, addSpace: false, expected: "In 0mins"),
+    Case(seconds: 0, expandUnits: false, addSpace: true, expected: "In 0 mins"),
+    Case(seconds: 0, expandUnits: true, addSpace: true, expected: "In 0 minutes"),
     // Hours, singular and plural.
-    Case(seconds: 3600, expand: false, space: false, expected: "In 1h"),
-    Case(seconds: 3600, expand: false, space: true, expected: "In 1 h"),
-    Case(seconds: 3600, expand: true, space: false, expected: "In 1hour"),
-    Case(seconds: 3600, expand: true, space: true, expected: "In 1 hour"),
-    Case(seconds: 7200, expand: false, space: false, expected: "In 2h"),
-    Case(seconds: 7200, expand: true, space: false, expected: "In 2hours"),
-    Case(seconds: 86_400, expand: false, space: true, expected: "In 24 h"),
-    Case(seconds: 3_600_000, expand: false, space: false, expected: "In 1000h"),
+    Case(seconds: 3600, expandUnits: false, addSpace: false, expected: "In 1h"),
+    Case(seconds: 3600, expandUnits: false, addSpace: true, expected: "In 1 h"),
+    Case(seconds: 3600, expandUnits: true, addSpace: false, expected: "In 1hour"),
+    Case(seconds: 3600, expandUnits: true, addSpace: true, expected: "In 1 hour"),
+    Case(seconds: 7200, expandUnits: false, addSpace: false, expected: "In 2h"),
+    Case(seconds: 7200, expandUnits: true, addSpace: false, expected: "In 2hours"),
+    Case(seconds: 86_400, expandUnits: false, addSpace: true, expected: "In 24 h"),
+    Case(seconds: 3_600_000, expandUnits: false, addSpace: false, expected: "In 1000h"),
 ]
 
 @Test(arguments: remainingCases)
 private func timeRemaining_permutations(_ c: Case) {
-    #expect(TimeLabel.timeRemaining(c.seconds, expand: c.expand, space: c.space) == c.expected)
+    #expect(TimeLabel.timeRemaining(c.seconds, expandUnits: c.expandUnits, addSpace: c.addSpace) == c.expected)
 }
 
 @Test func timeRemaining_boundariesAndTruncation() {
@@ -71,58 +71,58 @@ private func timeRemaining_permutations(_ c: Case) {
     #expect(TimeLabel.timeRemaining(1e15).hasSuffix("h"))
 }
 
-// MARK: - spellNumber
+// MARK: - spellNumbers
 
 @Test func timeRemaining_spelledNumber() {
-    // spellNumber spells the NUMBER but keeps the unit compact, and does NOT
-    // force a space — spacing is the user's choice via `space`.
-    #expect(TimeLabel.timeRemaining(25 * 60, spellNumber: true) == "In twenty-fivemins")
-    #expect(TimeLabel.timeRemaining(59 * 60, spellNumber: true) == "In fifty-ninemins")
-    #expect(TimeLabel.timeRemaining(60, spellNumber: true) == "In onemin")
-    #expect(TimeLabel.timeRemaining(0, spellNumber: true) == "In zeromins")
-    #expect(TimeLabel.timeRemaining(3600, spellNumber: true) == "In oneh")
-    #expect(TimeLabel.timeRemaining(1000 * 3600, spellNumber: true) == "In one thousandh")
-    #expect(TimeLabel.timeRemaining(25 * 60, space: true, spellNumber: true) == "In twenty-five mins")
-    #expect(TimeLabel.timeRemaining(60, space: true, spellNumber: true) == "In one min")
+    // spellNumbers spells the NUMBER but keeps the unit compact, and does NOT
+    // force a space — spacing is the user's choice via `addSpace`.
+    #expect(TimeLabel.timeRemaining(25 * 60, spellNumbers: true) == "In twenty-fivemins")
+    #expect(TimeLabel.timeRemaining(59 * 60, spellNumbers: true) == "In fifty-ninemins")
+    #expect(TimeLabel.timeRemaining(60, spellNumbers: true) == "In onemin")
+    #expect(TimeLabel.timeRemaining(0, spellNumbers: true) == "In zeromins")
+    #expect(TimeLabel.timeRemaining(3600, spellNumbers: true) == "In oneh")
+    #expect(TimeLabel.timeRemaining(1000 * 3600, spellNumbers: true) == "In one thousandh")
+    #expect(TimeLabel.timeRemaining(25 * 60, addSpace: true, spellNumbers: true) == "In twenty-five mins")
+    #expect(TimeLabel.timeRemaining(60, addSpace: true, spellNumbers: true) == "In one min")
 }
 
 @Test func timeRemaining_spelledNumber_withExpand() {
-    #expect(TimeLabel.timeRemaining(25 * 60, expand: true, spellNumber: true) == "In twenty-fiveminutes")
-    #expect(TimeLabel.timeRemaining(60, expand: true, spellNumber: true) == "In oneminute")
-    #expect(TimeLabel.timeRemaining(3600, expand: true, spellNumber: true) == "In onehour")
-    #expect(TimeLabel.timeRemaining(1000 * 3600, expand: true, spellNumber: true) == "In one thousandhours")
-    // Add `space: true` for the natural fully-spelled phrases.
-    #expect(TimeLabel.timeRemaining(25 * 60, expand: true, space: true, spellNumber: true) == "In twenty-five minutes")
-    #expect(TimeLabel.timeRemaining(60, expand: true, space: true, spellNumber: true) == "In one minute")
-    #expect(TimeLabel.timeRemaining(3600, expand: true, space: true, spellNumber: true) == "In one hour")
-    #expect(TimeLabel.timeRemaining(7200, expand: true, space: true, spellNumber: true) == "In two hours")
-    #expect(TimeLabel.timeRemaining(1000 * 3600, expand: true, space: true, spellNumber: true) == "In one thousand hours")
+    #expect(TimeLabel.timeRemaining(25 * 60, expandUnits: true, spellNumbers: true) == "In twenty-fiveminutes")
+    #expect(TimeLabel.timeRemaining(60, expandUnits: true, spellNumbers: true) == "In oneminute")
+    #expect(TimeLabel.timeRemaining(3600, expandUnits: true, spellNumbers: true) == "In onehour")
+    #expect(TimeLabel.timeRemaining(1000 * 3600, expandUnits: true, spellNumbers: true) == "In one thousandhours")
+    // Add `addSpace: true` for the natural fully-spelled phrases.
+    #expect(TimeLabel.timeRemaining(25 * 60, expandUnits: true, addSpace: true, spellNumbers: true) == "In twenty-five minutes")
+    #expect(TimeLabel.timeRemaining(60, expandUnits: true, addSpace: true, spellNumbers: true) == "In one minute")
+    #expect(TimeLabel.timeRemaining(3600, expandUnits: true, addSpace: true, spellNumbers: true) == "In one hour")
+    #expect(TimeLabel.timeRemaining(7200, expandUnits: true, addSpace: true, spellNumbers: true) == "In two hours")
+    #expect(TimeLabel.timeRemaining(1000 * 3600, expandUnits: true, addSpace: true, spellNumbers: true) == "In one thousand hours")
 }
 
 // MARK: - timeAgo
 
 private let agoCases: [Case] = [
-    Case(seconds: 300, expand: false, space: false, expected: "5mins ago"),
-    Case(seconds: 300, expand: false, space: true, expected: "5 mins ago"),
-    Case(seconds: 300, expand: true, space: false, expected: "5minutes ago"),
-    Case(seconds: 300, expand: true, space: true, expected: "5 minutes ago"),
-    Case(seconds: 60, expand: false, space: false, expected: "1min ago"),
-    Case(seconds: 60, expand: false, space: true, expected: "1 min ago"),
-    Case(seconds: 60, expand: true, space: false, expected: "1minute ago"),
-    Case(seconds: 60, expand: true, space: true, expected: "1 minute ago"),
-    Case(seconds: 3600, expand: false, space: false, expected: "1h ago"),
-    Case(seconds: 3600, expand: false, space: true, expected: "1 h ago"),
-    Case(seconds: 3600, expand: true, space: false, expected: "1hour ago"),
-    Case(seconds: 3600, expand: true, space: true, expected: "1 hour ago"),
-    Case(seconds: 10_800, expand: false, space: false, expected: "3h ago"),
-    Case(seconds: 10_800, expand: true, space: false, expected: "3hours ago"),
-    Case(seconds: 10_800, expand: true, space: true, expected: "3 hours ago"),
-    Case(seconds: 86_400, expand: false, space: true, expected: "24 h ago"),
+    Case(seconds: 300, expandUnits: false, addSpace: false, expected: "5mins ago"),
+    Case(seconds: 300, expandUnits: false, addSpace: true, expected: "5 mins ago"),
+    Case(seconds: 300, expandUnits: true, addSpace: false, expected: "5minutes ago"),
+    Case(seconds: 300, expandUnits: true, addSpace: true, expected: "5 minutes ago"),
+    Case(seconds: 60, expandUnits: false, addSpace: false, expected: "1min ago"),
+    Case(seconds: 60, expandUnits: false, addSpace: true, expected: "1 min ago"),
+    Case(seconds: 60, expandUnits: true, addSpace: false, expected: "1minute ago"),
+    Case(seconds: 60, expandUnits: true, addSpace: true, expected: "1 minute ago"),
+    Case(seconds: 3600, expandUnits: false, addSpace: false, expected: "1h ago"),
+    Case(seconds: 3600, expandUnits: false, addSpace: true, expected: "1 h ago"),
+    Case(seconds: 3600, expandUnits: true, addSpace: false, expected: "1hour ago"),
+    Case(seconds: 3600, expandUnits: true, addSpace: true, expected: "1 hour ago"),
+    Case(seconds: 10_800, expandUnits: false, addSpace: false, expected: "3h ago"),
+    Case(seconds: 10_800, expandUnits: true, addSpace: false, expected: "3hours ago"),
+    Case(seconds: 10_800, expandUnits: true, addSpace: true, expected: "3 hours ago"),
+    Case(seconds: 86_400, expandUnits: false, addSpace: true, expected: "24 h ago"),
 ]
 
 @Test(arguments: agoCases)
 private func timeAgo_permutations(_ c: Case) {
-    #expect(TimeLabel.timeAgo(ago(c.seconds), now: fixedDate, expand: c.expand, space: c.space) == c.expected)
+    #expect(TimeLabel.timeAgo(ago(c.seconds), now: fixedDate, expandUnits: c.expandUnits, addSpace: c.addSpace) == c.expected)
 }
 
 @Test func timeAgo_boundaries() {
@@ -146,8 +146,8 @@ private func timeAgo_permutations(_ c: Case) {
     let future = fixedDate.addingTimeInterval(86_400) // 2021-01-02
     let utc = utcCalendar()
     #expect(TimeLabel.timeAgo(future, now: fixedDate, calendar: utc) == "Jan 2, 2021")
-    // Regardless of expand/space/spellNumber.
-    #expect(TimeLabel.timeAgo(future, now: fixedDate, calendar: utc, expand: true, space: true, spellNumber: true) == "Jan 2, 2021")
+    // Regardless of expandUnits/space/spellNumbers.
+    #expect(TimeLabel.timeAgo(future, now: fixedDate, calendar: utc, expandUnits: true, addSpace: true, spellNumbers: true) == "Jan 2, 2021")
     // The calendar's timezone picks the day: 16:00 UTC on Jan 1 is 01:00 Jan 2 in Tokyo.
     let nearFuture = fixedDate.addingTimeInterval(30 * 60)
     #expect(TimeLabel.timeAgo(nearFuture, now: fixedDate, calendar: calendar("Asia/Tokyo")) == "Jan 2, 2021")
@@ -156,23 +156,23 @@ private func timeAgo_permutations(_ c: Case) {
 
 @Test func timeAgo_spelledNumber() {
     let now = fixedDate
-    #expect(TimeLabel.timeAgo(ago(300), now: now, spellNumber: true) == "fivemins ago")
-    #expect(TimeLabel.timeAgo(ago(60), now: now, spellNumber: true) == "onemin ago")
-    #expect(TimeLabel.timeAgo(ago(3 * 3600), now: now, spellNumber: true) == "threeh ago")
-    #expect(TimeLabel.timeAgo(ago(1000 * 3600), now: now, spellNumber: true) == "one thousandh ago")
-    #expect(TimeLabel.timeAgo(ago(300), now: now, space: true, spellNumber: true) == "five mins ago")
-    #expect(TimeLabel.timeAgo(ago(60), now: now, space: true, spellNumber: true) == "one min ago")
+    #expect(TimeLabel.timeAgo(ago(300), now: now, spellNumbers: true) == "fivemins ago")
+    #expect(TimeLabel.timeAgo(ago(60), now: now, spellNumbers: true) == "onemin ago")
+    #expect(TimeLabel.timeAgo(ago(3 * 3600), now: now, spellNumbers: true) == "threeh ago")
+    #expect(TimeLabel.timeAgo(ago(1000 * 3600), now: now, spellNumbers: true) == "one thousandh ago")
+    #expect(TimeLabel.timeAgo(ago(300), now: now, addSpace: true, spellNumbers: true) == "five mins ago")
+    #expect(TimeLabel.timeAgo(ago(60), now: now, addSpace: true, spellNumbers: true) == "one min ago")
 }
 
 @Test func timeAgo_spelledNumber_withExpand() {
     let now = fixedDate
-    #expect(TimeLabel.timeAgo(ago(300), now: now, expand: true, spellNumber: true) == "fiveminutes ago")
-    #expect(TimeLabel.timeAgo(ago(60), now: now, expand: true, spellNumber: true) == "oneminute ago")
-    #expect(TimeLabel.timeAgo(ago(3 * 3600), now: now, expand: true, spellNumber: true) == "threehours ago")
-    #expect(TimeLabel.timeAgo(ago(300), now: now, expand: true, space: true, spellNumber: true) == "five minutes ago")
-    #expect(TimeLabel.timeAgo(ago(60), now: now, expand: true, space: true, spellNumber: true) == "one minute ago")
-    #expect(TimeLabel.timeAgo(ago(3 * 3600), now: now, expand: true, space: true, spellNumber: true) == "three hours ago")
-    #expect(TimeLabel.timeAgo(ago(1000 * 3600), now: now, expand: true, space: true, spellNumber: true) == "one thousand hours ago")
+    #expect(TimeLabel.timeAgo(ago(300), now: now, expandUnits: true, spellNumbers: true) == "fiveminutes ago")
+    #expect(TimeLabel.timeAgo(ago(60), now: now, expandUnits: true, spellNumbers: true) == "oneminute ago")
+    #expect(TimeLabel.timeAgo(ago(3 * 3600), now: now, expandUnits: true, spellNumbers: true) == "threehours ago")
+    #expect(TimeLabel.timeAgo(ago(300), now: now, expandUnits: true, addSpace: true, spellNumbers: true) == "five minutes ago")
+    #expect(TimeLabel.timeAgo(ago(60), now: now, expandUnits: true, addSpace: true, spellNumbers: true) == "one minute ago")
+    #expect(TimeLabel.timeAgo(ago(3 * 3600), now: now, expandUnits: true, addSpace: true, spellNumbers: true) == "three hours ago")
+    #expect(TimeLabel.timeAgo(ago(1000 * 3600), now: now, expandUnits: true, addSpace: true, spellNumbers: true) == "one thousand hours ago")
 }
 
 // MARK: - Units: days and weeks
@@ -201,12 +201,12 @@ private func timeAgo_permutations(_ c: Case) {
 
 @Test func dayAndWeekUnits_expandAndSpace() {
     let threeDays = ago(3 * day)
-    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, space: true, largestUnit: .day) == "3 d ago")
-    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, expand: true, largestUnit: .day) == "3days ago")
-    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, expand: true, space: true, largestUnit: .day) == "3 days ago")
-    #expect(TimeLabel.timeAgo(ago(week), now: fixedDate, expand: true, space: true, largestUnit: .week) == "1 week ago")
-    #expect(TimeLabel.timeAgo(ago(2 * week), now: fixedDate, expand: true, space: true, largestUnit: .week) == "2 weeks ago")
-    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, space: true, spellNumber: true, largestUnit: .day) == "three d ago")
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, addSpace: true, largestUnit: .day) == "3 d ago")
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, expandUnits: true, largestUnit: .day) == "3days ago")
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, expandUnits: true, addSpace: true, largestUnit: .day) == "3 days ago")
+    #expect(TimeLabel.timeAgo(ago(week), now: fixedDate, expandUnits: true, addSpace: true, largestUnit: .week) == "1 week ago")
+    #expect(TimeLabel.timeAgo(ago(2 * week), now: fixedDate, expandUnits: true, addSpace: true, largestUnit: .week) == "2 weeks ago")
+    #expect(TimeLabel.timeAgo(threeDays, now: fixedDate, addSpace: true, spellNumbers: true, largestUnit: .day) == "three d ago")
 }
 
 // MARK: - Units: seconds
@@ -214,9 +214,9 @@ private func timeAgo_permutations(_ c: Case) {
 @Test func secondsGranularity() {
     #expect(TimeLabel.timeRemaining(45, smallestUnit: .second) == "In 45s")
     #expect(TimeLabel.timeRemaining(0, smallestUnit: .second) == "In 0s")
-    #expect(TimeLabel.timeRemaining(59, space: true, smallestUnit: .second) == "In 59 s")
-    #expect(TimeLabel.timeRemaining(1, expand: true, space: true, smallestUnit: .second) == "In 1 second")
-    #expect(TimeLabel.timeRemaining(5, expand: true, space: true, smallestUnit: .second) == "In 5 seconds")
+    #expect(TimeLabel.timeRemaining(59, addSpace: true, smallestUnit: .second) == "In 59 s")
+    #expect(TimeLabel.timeRemaining(1, expandUnits: true, addSpace: true, smallestUnit: .second) == "In 1 second")
+    #expect(TimeLabel.timeRemaining(5, expandUnits: true, addSpace: true, smallestUnit: .second) == "In 5 seconds")
     // Minutes still win once there is at least one.
     #expect(TimeLabel.timeRemaining(60, smallestUnit: .second) == "In 1min")
     #expect(TimeLabel.timeAgo(ago(30), now: fixedDate, smallestUnit: .second) == "30s ago")
@@ -239,8 +239,8 @@ private func timeAgo_permutations(_ c: Case) {
 @Test func relative_choosesDirection() {
     #expect(TimeLabel.relative(ahead(300), now: fixedDate) == "In 5mins")
     #expect(TimeLabel.relative(ago(300), now: fixedDate) == "5mins ago")
-    #expect(TimeLabel.relative(ahead(2 * 3600), now: fixedDate, expand: true, space: true) == "In 2 hours")
-    #expect(TimeLabel.relative(ago(2 * 3600), now: fixedDate, expand: true, space: true) == "2 hours ago")
+    #expect(TimeLabel.relative(ahead(2 * 3600), now: fixedDate, expandUnits: true, addSpace: true) == "In 2 hours")
+    #expect(TimeLabel.relative(ago(2 * 3600), now: fixedDate, expandUnits: true, addSpace: true) == "2 hours ago")
     #expect(TimeLabel.relative(ahead(3 * day), now: fixedDate, largestUnit: .day) == "In 3d")
     #expect(TimeLabel.relative(ago(3 * day), now: fixedDate, largestUnit: .day) == "3d ago")
 }
@@ -273,7 +273,7 @@ private func timeAgo_permutations(_ c: Case) {
 
 @Test func timeRemainingUntil_matchesSeconds() {
     #expect(TimeLabel.timeRemaining(until: ahead(1800), now: fixedDate) == "In 30mins")
-    #expect(TimeLabel.timeRemaining(until: ahead(2 * 3600), now: fixedDate, expand: true, space: true) == "In 2 hours")
+    #expect(TimeLabel.timeRemaining(until: ahead(2 * 3600), now: fixedDate, expandUnits: true, addSpace: true) == "In 2 hours")
     #expect(TimeLabel.timeRemaining(until: ahead(3 * day), now: fixedDate, largestUnit: .day) == "In 3d")
     #expect(TimeLabel.timeRemaining(until: ahead(45), now: fixedDate, smallestUnit: .second) == "In 45s")
     for seconds: TimeInterval in [0, 59, 60, 3599, 3600, 100_000] {
@@ -304,7 +304,7 @@ private func timeAgo_permutations(_ c: Case) {
     #expect(TimeLabel.timeAgo(ago(90), now: fixedDate, rounding: .nearest) == "2mins ago")
     #expect(TimeLabel.relative(ahead(150), now: fixedDate, rounding: .nearest) == "In 3mins")
     #expect(TimeLabel.relative(ago(150), now: fixedDate, rounding: .nearest) == "3mins ago")
-    #expect(TimeLabel.timeRemaining(5400, expand: true, space: true, rounding: .nearest) == "In 2 hours")
+    #expect(TimeLabel.timeRemaining(5400, expandUnits: true, addSpace: true, rounding: .nearest) == "In 2 hours")
 }
 
 @Test func rounding_nearestMovesUpAUnit() {

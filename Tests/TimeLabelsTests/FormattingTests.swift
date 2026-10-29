@@ -39,9 +39,9 @@ import Foundation
     #expect(formatter.dateFormat == "h:mm a")
 }
 
-@Test func makeDateLabelFormatterConfiguration() {
+@Test func makeMediumDateFormatterConfiguration() {
     let utc = utcCalendar()
-    let formatter = TimeLabel.makeDateLabelFormatter(calendar: utc)
+    let formatter = TimeLabel.makeMediumDateFormatter(calendar: utc)
     #expect(formatter.dateFormat == "MMM d, yyyy")
     #expect(formatter.timeZone == utc.timeZone)
 }
@@ -49,45 +49,45 @@ import Foundation
 // MARK: - Plural units
 
 @Test func pluralUnit_helper() {
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: true, unit: .hour) == "hour")
-    #expect(TimeLabel.pluralUnit(count: 2, expanded: true, unit: .hour) == "hours")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: true, unit: .minute) == "minute")
-    #expect(TimeLabel.pluralUnit(count: 30, expanded: true, unit: .minute) == "minutes")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: false, unit: .hour) == "h")
-    #expect(TimeLabel.pluralUnit(count: 2, expanded: false, unit: .hour) == "h")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: false, unit: .minute) == "min")
-    #expect(TimeLabel.pluralUnit(count: 30, expanded: false, unit: .minute) == "mins")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: true, unit: .hour) == "hour")
+    #expect(TimeLabel.pluralUnit(count: 2, expandUnits: true, unit: .hour) == "hours")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: true, unit: .minute) == "minute")
+    #expect(TimeLabel.pluralUnit(count: 30, expandUnits: true, unit: .minute) == "minutes")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: false, unit: .hour) == "h")
+    #expect(TimeLabel.pluralUnit(count: 2, expandUnits: false, unit: .hour) == "h")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: false, unit: .minute) == "min")
+    #expect(TimeLabel.pluralUnit(count: 30, expandUnits: false, unit: .minute) == "mins")
     // Seconds, days and weeks.
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: true, unit: .second) == "second")
-    #expect(TimeLabel.pluralUnit(count: 5, expanded: true, unit: .second) == "seconds")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: true, unit: .day) == "day")
-    #expect(TimeLabel.pluralUnit(count: 3, expanded: true, unit: .day) == "days")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: true, unit: .week) == "week")
-    #expect(TimeLabel.pluralUnit(count: 2, expanded: true, unit: .week) == "weeks")
-    #expect(TimeLabel.pluralUnit(count: 1, expanded: false, unit: .second) == "s")
-    #expect(TimeLabel.pluralUnit(count: 3, expanded: false, unit: .day) == "d")
-    #expect(TimeLabel.pluralUnit(count: 2, expanded: false, unit: .week) == "w")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: true, unit: .second) == "second")
+    #expect(TimeLabel.pluralUnit(count: 5, expandUnits: true, unit: .second) == "seconds")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: true, unit: .day) == "day")
+    #expect(TimeLabel.pluralUnit(count: 3, expandUnits: true, unit: .day) == "days")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: true, unit: .week) == "week")
+    #expect(TimeLabel.pluralUnit(count: 2, expandUnits: true, unit: .week) == "weeks")
+    #expect(TimeLabel.pluralUnit(count: 1, expandUnits: false, unit: .second) == "s")
+    #expect(TimeLabel.pluralUnit(count: 3, expandUnits: false, unit: .day) == "d")
+    #expect(TimeLabel.pluralUnit(count: 2, expandUnits: false, unit: .week) == "w")
 }
 
 // MARK: - Unit selection
 
 @Test func components_rounding() {
-    let down = TimeLabel.components(for: 5400, smallest: .minute, largest: .hour)
+    let down = TimeLabel.components(for: 5400, smallestUnit: .minute, largestUnit: .hour)
     #expect(down.count == 1 && down.unit == .hour)
-    let nearest = TimeLabel.components(for: 5400, smallest: .minute, largest: .hour, rounding: .nearest)
+    let nearest = TimeLabel.components(for: 5400, smallestUnit: .minute, largestUnit: .hour, rounding: .nearest)
     #expect(nearest.count == 2 && nearest.unit == .hour)
-    let promoted = TimeLabel.components(for: 3570, smallest: .minute, largest: .hour, rounding: .nearest)
+    let promoted = TimeLabel.components(for: 3570, smallestUnit: .minute, largestUnit: .hour, rounding: .nearest)
     #expect(promoted.count == 1 && promoted.unit == .hour)
     // A largest below smallest is still treated as smallest.
-    let inverted = TimeLabel.components(for: 7200, smallest: .hour, largest: .minute, rounding: .nearest)
+    let inverted = TimeLabel.components(for: 7200, smallestUnit: .hour, largestUnit: .minute, rounding: .nearest)
     #expect(inverted.count == 2 && inverted.unit == .hour)
 }
 
 // MARK: - Joining
 
 @Test func joined_onlySpaceAddsASpace() {
-    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: false, spellNumber: false) == "5mins")
-    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: true, spellNumber: false) == "5 mins")
-    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: false, spellNumber: true) == "fivemins")
-    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: true, spellNumber: true) == "five mins")
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", addSpace: false, spellNumbers: false) == "5mins")
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", addSpace: true, spellNumbers: false) == "5 mins")
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", addSpace: false, spellNumbers: true) == "fivemins")
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", addSpace: true, spellNumbers: true) == "five mins")
 }
