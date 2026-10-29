@@ -20,6 +20,22 @@ extension TimeLabel {
         makeFormatter(use24Hour ? "HH:mm" : "h:mm a", calendar: calendar).string(from: date)
     }
 
+    // MARK: - Time range
+
+    /// Two clock times joined by a spaced en dash, e.g. "11:00 AM – 1:30 PM".
+    /// When both times fall on the same day and share AM or PM, the first one
+    /// drops the suffix: "3:30 – 4:15 PM". With `use24Hour: true` both times
+    /// are always written out: "15:30 – 16:15". The times are formatted as
+    /// given, so an `end` before `start` isn't swapped or rejected.
+    public static func timeRange(_ start: Date, _ end: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String {
+        let endText = time(end, calendar: calendar, use24Hour: use24Hour)
+        let isMorning = { (date: Date) in calendar.component(.hour, from: date) < 12 }
+        if !use24Hour, calendar.isDate(start, inSameDayAs: end), isMorning(start) == isMorning(end) {
+            return "\(makeFormatter("h:mm", calendar: calendar).string(from: start)) – \(endText)"
+        }
+        return "\(time(start, calendar: calendar, use24Hour: use24Hour)) – \(endText)"
+    }
+
     // MARK: - Date label
 
     /// Empty for today, "Tomorrow" for tomorrow, otherwise the medium-style date
@@ -29,7 +45,9 @@ extension TimeLabel {
     /// `relativeDays: true` also labels yesterday ("Yesterday") and dates 2–6
     /// days away in either direction with the weekday name ("Monday"); anything
     /// further out stays a medium-style date.
-    public static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false) -> String {
+    /// `omitCurrentYear: true` leaves the year off dates in the same year as
+    /// `now` ("Jun 20"); dates in other years keep it ("Jun 20, 2025").
+    public static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false) -> String {
         if relativeDays {
             let today = calendar.startOfDay(for: now)
             let target = calendar.startOfDay(for: date)
@@ -39,7 +57,7 @@ extension TimeLabel {
             case 1: return "Tomorrow"
             case -1: return "Yesterday"
             case 2...6, -6 ... -2: return makeFormatter("EEEE", calendar: calendar).string(from: date)
-            default: return makeDateLabelFormatter(calendar: calendar).string(from: date)
+            default: return mediumDate(date, now: now, calendar: calendar, omitCurrentYear: omitCurrentYear)
             }
         }
         if calendar.isDate(date, inSameDayAs: now) {
@@ -48,6 +66,27 @@ extension TimeLabel {
         if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now),
            calendar.isDate(date, inSameDayAs: tomorrow) {
             return "Tomorrow"
+        }
+        return mediumDate(date, now: now, calendar: calendar, omitCurrentYear: omitCurrentYear)
+    }
+
+    // MARK: - Date and time
+
+    /// `dateLabel` and `time` together: "3:30 PM" today, "Tomorrow at 3:30 PM",
+    /// or "Jun 20, 2026 at 3:30 PM". `relativeDays` and `omitCurrentYear` work
+    /// as in `dateLabel` ("Yesterday at 3:30 PM", "Monday at 3:30 PM",
+    /// "Jun 20 at 3:30 PM"), and `use24Hour` as in `time` ("Tomorrow at 15:30").
+    public static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false) -> String {
+        let day = dateLabel(date, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear)
+        let clock = time(date, calendar: calendar, use24Hour: use24Hour)
+        return day.isEmpty ? clock : "\(day) at \(clock)"
+    }
+
+    // MARK: - Helpers
+
+    private static func mediumDate(_ date: Date, now: Date, calendar: Calendar, omitCurrentYear: Bool) -> String {
+        if omitCurrentYear, calendar.component(.year, from: date) == calendar.component(.year, from: now) {
+            return makeFormatter("MMM d", calendar: calendar).string(from: date)
         }
         return makeDateLabelFormatter(calendar: calendar).string(from: date)
     }

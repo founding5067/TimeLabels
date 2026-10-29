@@ -2,7 +2,7 @@ import Testing
 import Foundation
 @testable import TimeLabels
 
-// Tests for TimeLabel+Calendar.swift: time and dateLabel.
+// Tests for TimeLabel+Calendar.swift: time, timeRange, dateLabel and dateTime.
 
 // MARK: - time
 
@@ -158,4 +158,73 @@ import Foundation
     // 2021 is not: Mar 1 directly follows Feb 28.
     let feb28b = makeDate(2021, 2, 28, 10, 0, in: utc)
     #expect(TimeLabel.dateLabel(makeDate(2021, 3, 1, 10, 0, in: utc), now: feb28b, calendar: utc) == "Tomorrow")
+}
+
+// MARK: - timeRange
+
+@Test func timeRange_sharedSuffix() {
+    let utc = utcCalendar()
+    #expect(TimeLabel.timeRange(fixedDate, ahead(45 * 60), calendar: utc) == "3:30 – 4:15 PM")
+    // 9:00 to 10:00 UTC.
+    #expect(TimeLabel.timeRange(ago(6.5 * 3600), ago(5.5 * 3600), calendar: utc) == "9:00 – 10:00 AM")
+    // Tokyo is already 00:30 on Jan 2.
+    #expect(TimeLabel.timeRange(fixedDate, ahead(3600), calendar: calendar("Asia/Tokyo")) == "12:30 – 1:30 AM")
+}
+
+@Test func timeRange_fullTimes() {
+    let utc = utcCalendar()
+    // Crossing noon.
+    #expect(TimeLabel.timeRange(ago(4 * 3600), ago(3.25 * 3600), calendar: utc) == "11:30 AM – 12:15 PM")
+    #expect(TimeLabel.timeRange(ago(4.5 * 3600), ago(2 * 3600), calendar: utc) == "11:00 AM – 1:30 PM")
+    // Crossing midnight.
+    #expect(TimeLabel.timeRange(ahead(8 * 3600), ahead(9 * 3600), calendar: utc) == "11:30 PM – 12:30 AM")
+    // Same AM/PM but different days keeps both suffixes.
+    #expect(TimeLabel.timeRange(fixedDate, ahead(day + 3600), calendar: utc) == "3:30 PM – 4:30 PM")
+    // Reversed input is formatted as given.
+    #expect(TimeLabel.timeRange(ahead(45 * 60), fixedDate, calendar: utc) == "4:15 – 3:30 PM")
+}
+
+@Test func timeRange_24Hour() {
+    let utc = utcCalendar()
+    #expect(TimeLabel.timeRange(fixedDate, ahead(45 * 60), calendar: utc, use24Hour: true) == "15:30 – 16:15")
+    #expect(TimeLabel.timeRange(ahead(8 * 3600), ahead(9 * 3600), calendar: utc, use24Hour: true) == "23:30 – 00:30")
+}
+
+@Test func timeRange_usesSpacedEnDash() {
+    #expect(TimeLabel.timeRange(fixedDate, ahead(3600), calendar: utcCalendar()).contains(" \u{2013} "))
+}
+
+// MARK: - dateLabel omitCurrentYear
+
+@Test func dateLabel_omitCurrentYear() {
+    let utc = utcCalendar()
+    func label(_ d: Date, relativeDays: Bool = false) -> String {
+        TimeLabel.dateLabel(d, now: fixedDate, calendar: utc, relativeDays: relativeDays, omitCurrentYear: true)
+    }
+    #expect(label(ahead(2 * day)) == "Jan 3")
+    #expect(label(ago(day)) == "Dec 31, 2020")
+    #expect(label(fixedDate) == "")
+    #expect(label(ahead(day)) == "Tomorrow")
+    #expect(label(ahead(7 * day), relativeDays: true) == "Jan 8")
+    #expect(label(ago(7 * day), relativeDays: true) == "Dec 25, 2020")
+    #expect(label(ahead(2 * day), relativeDays: true) == "Sunday")
+}
+
+@Test func dateLabel_omitCurrentYearHonorsTimezone() {
+    // Dec 31 15:30 UTC is already Jan 1 in Tokyo, the same year as "now" there.
+    #expect(TimeLabel.dateLabel(ago(day), now: fixedDate, calendar: calendar("Asia/Tokyo"), omitCurrentYear: true) == "Jan 1")
+    #expect(TimeLabel.dateLabel(ago(day), now: fixedDate, calendar: utcCalendar(), omitCurrentYear: true) == "Dec 31, 2020")
+}
+
+// MARK: - dateTime
+
+@Test func dateTime_combinesDateAndTime() {
+    let utc = utcCalendar()
+    #expect(TimeLabel.dateTime(fixedDate, now: fixedDate, calendar: utc) == "3:30 PM")
+    #expect(TimeLabel.dateTime(ahead(day), now: fixedDate, calendar: utc) == "Tomorrow at 3:30 PM")
+    #expect(TimeLabel.dateTime(ahead(2 * day), now: fixedDate, calendar: utc) == "Jan 3, 2021 at 3:30 PM")
+    #expect(TimeLabel.dateTime(ahead(2 * day), now: fixedDate, calendar: utc, omitCurrentYear: true) == "Jan 3 at 3:30 PM")
+    #expect(TimeLabel.dateTime(ago(day), now: fixedDate, calendar: utc, relativeDays: true) == "Yesterday at 3:30 PM")
+    #expect(TimeLabel.dateTime(ago(2 * day), now: fixedDate, calendar: utc, relativeDays: true) == "Wednesday at 3:30 PM")
+    #expect(TimeLabel.dateTime(ahead(day), now: fixedDate, calendar: utc, use24Hour: true) == "Tomorrow at 15:30")
 }

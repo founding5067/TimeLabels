@@ -24,9 +24,19 @@ extension TimeLabel {
     /// `spellNumber: true` spells the number while keeping the unit compact:
     /// "In twenty-fivemins". It does NOT add a space — spacing is controlled
     /// only by `space`, so pass `space: true` for "In twenty-five mins".
-    public static func timeRemaining(_ seconds: TimeInterval, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour) -> String {
-        let (count, unit) = components(for: clampedSeconds(seconds), smallest: smallestUnit, largest: largestUnit)
+    /// `rounding: .nearest` rounds to the nearest unit instead of dropping the
+    /// partial one: 90 minutes reads "In 2h" rather than "In 1h".
+    public static func timeRemaining(_ seconds: TimeInterval, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String {
+        let (count, unit) = components(for: clampedSeconds(seconds), smallest: smallestUnit, largest: largestUnit, rounding: rounding)
         return "In \(phrase(count: count, unit: unit, expand: expand, space: space, spellNumber: spellNumber))"
+    }
+
+    /// `timeRemaining(_:)` measured from `now` to `date`, so you don't have to
+    /// subtract the dates yourself. A `date` at or before `now` reads
+    /// "In 0mins", exactly like passing a negative number of seconds; use
+    /// `relative(_:)` if the label should flip to "ago" once the date passes.
+    public static func timeRemaining(until date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String {
+        timeRemaining(date.timeIntervalSince(now), expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
     }
 
     // MARK: - Time ago
@@ -49,7 +59,9 @@ extension TimeLabel {
     /// (`smallestUnit: .second` gives "30s ago", `largestUnit: .week` gives
     /// "2w ago"). "Just now" covers anything shorter than one `smallestUnit`.
     /// The defaults are `.minute` and `.hour`.
-    public static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour) -> String {
+    /// `rounding: .nearest` rounds to the nearest unit (90 minutes reads
+    /// "2h ago"); it doesn't move the "Just now" cutoff.
+    public static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String {
         let diff = now.timeIntervalSince(date)
         if diff < 0 {
             return makeDateLabelFormatter(calendar: calendar).string(from: date)
@@ -59,7 +71,7 @@ extension TimeLabel {
         if clamped < TimeInterval(smallestUnit.seconds) {
             return "Just now"
         }
-        let (count, unit) = components(for: clamped, smallest: smallestUnit, largest: largestUnit)
+        let (count, unit) = components(for: clamped, smallest: smallestUnit, largest: largestUnit, rounding: rounding)
         return "\(phrase(count: count, unit: unit, expand: expand, space: space, spellNumber: spellNumber)) ago"
     }
 
@@ -68,16 +80,16 @@ extension TimeLabel {
     /// Picks "In 5mins" or "5mins ago" automatically from the sign of the
     /// difference between `date` and `now`. Anything shorter than one
     /// `smallestUnit` reads "Now" (future) or "Just now" (past/equal). The
-    /// `expand`, `space`, `spellNumber`, `smallestUnit` and `largestUnit`
-    /// parameters behave exactly as in `timeRemaining` and `timeAgo`.
-    public static func relative(_ date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour) -> String {
+    /// `expand`, `space`, `spellNumber`, `smallestUnit`, `largestUnit` and
+    /// `rounding` parameters behave exactly as in `timeRemaining` and `timeAgo`.
+    public static func relative(_ date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String {
         let diff = date.timeIntervalSince(now)
         let isFuture = diff > 0
         let clamped = clampedSeconds(abs(diff))
         if clamped < TimeInterval(smallestUnit.seconds) {
             return isFuture ? "Now" : "Just now"
         }
-        let (count, unit) = components(for: clamped, smallest: smallestUnit, largest: largestUnit)
+        let (count, unit) = components(for: clamped, smallest: smallestUnit, largest: largestUnit, rounding: rounding)
         let text = phrase(count: count, unit: unit, expand: expand, space: space, spellNumber: spellNumber)
         return isFuture ? "In \(text)" : "\(text) ago"
     }

@@ -13,17 +13,20 @@ UI — "In 2h", "5mins ago", "3:30 PM", "Tomorrow" — without duplicating
 
 ## Features
 
-- `timeRemaining(_:)` — time **until** an event ("In 30mins" / "In 2h")
+- `timeRemaining(_:)` / `timeRemaining(until:)` — time **until** an event ("In 30mins" / "In 2h"), from seconds or a `Date`
 - `timeAgo(_:)` — time **since** an event ("Just now" / "5mins ago" / a date)
 - `relative(_:)` — picks "In 5mins" or "5mins ago" automatically
-- `duration(_:)` — a plain length of time ("1h 30m", or timer-style "1:30:00")
+- `duration(_:)` — a plain length of time ("1h 30m", or timer-style "1:30:00"), from seconds or a Swift `Duration`, optionally trimmed with `maxParts:` ("27h 46m")
 - `time(_:)` — short clock time ("3:30 PM", or "15:30" with `use24Hour: true`)
-- `dateLabel(_:)` — contextual date label ("" for today, "Tomorrow", else "Jun 20, 2026"; with `relativeDays: true` also "Yesterday" and weekday names)
+- `timeRange(_:_:)` — a span of clock times ("3:30 – 4:15 PM" / "11:00 AM – 1:30 PM")
+- `dateLabel(_:)` — contextual date label ("" for today, "Tomorrow", else "Jun 20, 2026"; with `relativeDays: true` also "Yesterday" and weekday names; with `omitCurrentYear: true` "Jun 20" for this year)
+- `dateTime(_:)` — date and time together ("Tomorrow at 3:30 PM")
 - Seconds, days and weeks via `smallestUnit:` / `largestUnit:` ("30s ago", "3d ago", "2w ago")
+- Round to the nearest unit with `rounding: .nearest` (90 minutes reads "2h ago" instead of "1h ago")
 - `Date` extensions (`date.timeAgo()`, `date.relative()`, ...) and a self-updating SwiftUI `TimeLabelText`
 - Thread-safe: no shared mutable state (each call builds its own formatter)
 - Deterministic output: a fixed `en_US_POSIX` locale and pattern so results don't drift with the device locale or OS version
-- Testable: `timeAgo` and `dateLabel` take a `now:` parameter
+- Testable: every date-based helper (`timeAgo`, `relative`, `timeRemaining(until:)`, `dateLabel`, `dateTime`) takes a `now:` parameter
 
 ## Requirements
 
@@ -104,7 +107,7 @@ let label = TimeLabel.dateLabel(date, calendar: calendar)
 
 ### Testing your own code
 
-`timeAgo` and `dateLabel` accept a `now:` parameter so you can pin the clock:
+The date-based helpers accept a `now:` parameter so you can pin the clock:
 
 ```swift
 let now = Date(timeIntervalSince1970: 1_609_515_000)
@@ -115,15 +118,19 @@ TimeLabel.timeAgo(now.addingTimeInterval(-300), now: now) // "5mins ago"
 
 | Function | Signature | Returns |
 | --- | --- | --- |
-| `timeRemaining` | `static func timeRemaining(_ seconds: TimeInterval, expand: Bool = false, space: Bool = false, spellNumber: Bool = false) -> String` | `"In 30mins"` / `"In 2h"` (or `"In 30minutes"` / `"In 2hours"` with `expand: true`; or `"In 30 mins"` / `"In 2 h"` with `space: true`; or `"In 30 minutes"` / `"In 2 hours"` with `expand: true, space: true`) |
-| `timeAgo` | `static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false) -> String` | `"Just now"` / `"5mins ago"` / `"3h ago"` / a medium-style date for future dates (or `"5minutes ago"` / `"3hours ago"` with `expand: true`; or `"5 mins ago"` / `"3 h ago"` with `space: true`; or `"5 minutes ago"` / `"3 hours ago"` with `expand: true, space: true`) |
-| `relative` | `static func relative(_ date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour) -> String` | `"In 5mins"` (future) / `"5mins ago"` (past) / `"Now"` / `"Just now"` |
-| `duration` | `static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, largestUnit: Unit = .hour) -> String` | `"1h 30m"` (`.compact`) / `"1:30:00"` (`.countdown`) |
+| `timeRemaining` | `static func timeRemaining(_ seconds: TimeInterval, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | `"In 30mins"` / `"In 2h"` (or `"In 30minutes"` / `"In 2hours"` with `expand: true`; or `"In 30 mins"` / `"In 2 h"` with `space: true`; or `"In 30 minutes"` / `"In 2 hours"` with `expand: true, space: true`) |
+| `timeRemaining(until:)` | `static func timeRemaining(until date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | The same as `timeRemaining`, measured from `now` to `date`; `"In 0mins"` once `date` has passed |
+| `timeAgo` | `static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | `"Just now"` / `"5mins ago"` / `"3h ago"` / a medium-style date for future dates (or `"5minutes ago"` / `"3hours ago"` with `expand: true`; or `"5 mins ago"` / `"3 h ago"` with `space: true`; or `"5 minutes ago"` / `"3 hours ago"` with `expand: true, space: true`) |
+| `relative` | `static func relative(_ date: Date, now: Date = Date(), expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | `"In 5mins"` (future) / `"5mins ago"` (past) / `"Now"` / `"Just now"` |
+| `duration` | `static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, largestUnit: Unit = .hour, maxParts: Int? = nil) -> String` | `"1h 30m"` (`.compact`) / `"1:30:00"` (`.countdown`) |
+| `duration` (Swift `Duration`) | `static func duration(_ duration: Duration, style: DurationStyle = .compact, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, largestUnit: Unit = .hour, maxParts: Int? = nil) -> String` | The same as above, e.g. `.seconds(5400)` gives `"1h 30m"` |
 | `time` | `static func time(_ date: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | Short clock time, e.g. `"3:30 PM"` (or `"15:30"` with `use24Hour: true`) |
-| `dateLabel` | `static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `relativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days) |
+| `timeRange` | `static func timeRange(_ start: Date, _ end: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | `"3:30 – 4:15 PM"` (same day and AM/PM) / `"11:00 AM – 1:30 PM"` / `"15:30 – 16:15"` |
+| `dateLabel` | `static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `relativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days; with `omitCurrentYear: true`, `"Jun 20"` for dates in the current year) |
+| `dateTime` | `static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false) -> String` | `"3:30 PM"` (today) / `"Tomorrow at 3:30 PM"` / `"Jun 20, 2026 at 3:30 PM"` |
 
-`timeRemaining` and `timeAgo` also take `smallestUnit:` and `largestUnit:`
-(see **Units**).
+The relative helpers take `smallestUnit:` and `largestUnit:` (see **Units**)
+and `rounding:` (see **Rounding**).
 
 ## Short, spaced, or expanded words
 
@@ -171,6 +178,19 @@ TimeLabel.timeAgo(thirtySecondsAgo, smallestUnit: .second) // "30s ago"
 TimeLabel.timeRemaining(45, smallestUnit: .second)    // "In 45s"
 ```
 
+## Rounding
+
+By default a partial unit is dropped, so 89 *and* 90 minutes both read "1h".
+Pass `rounding: .nearest` to round instead (halves round up). A result that
+reaches the next unit moves up to it, so 59.5 minutes reads "1h", not
+"60mins". "Just now" and "Now" still cover anything under one `smallestUnit`.
+
+```swift
+TimeLabel.timeAgo(ninetyMinutesAgo)                       // "1h ago"
+TimeLabel.timeAgo(ninetyMinutesAgo, rounding: .nearest)   // "2h ago"
+TimeLabel.timeRemaining(3570, rounding: .nearest)         // "In 1h"
+```
+
 ## Relative labels
 
 `relative` chooses the direction for you, so a countdown that passes zero
@@ -179,6 +199,13 @@ doesn't get stuck on "In 0mins":
 ```swift
 TimeLabel.relative(eventDate)  // "In 5mins" before the event, "5mins ago" after
 TimeLabel.relative(eventDate, smallestUnit: .second) // "In 30s" / "Now" / "Just now"
+```
+
+If you only ever want the countdown, `timeRemaining(until:)` takes the date
+directly:
+
+```swift
+TimeLabel.timeRemaining(until: eventDate)  // "In 30mins"; "In 0mins" once it passes
 ```
 
 ## Durations
@@ -203,7 +230,18 @@ TimeLabel.duration(100_000, expand: true, space: true, largestUnit: .day)
 TimeLabel.duration(5400, space: true, spellNumber: true)  // "one h thirty m"
 ```
 
-`.countdown` ignores `expand`, `space`, `spellNumber` and `largestUnit`.
+`maxParts` keeps only the biggest units, counted down from the first non-zero
+one (smaller units are dropped, not rounded). A Swift `Duration` works too:
+
+```swift
+TimeLabel.duration(100_000, maxParts: 2)                  // "27h 46m"
+TimeLabel.duration(3601, maxParts: 2)                     // "1h" (the 0 minutes use up a part)
+TimeLabel.duration(.seconds(5400))                        // "1h 30m"
+TimeLabel.duration(clock.now - start, style: .countdown)  // "4:05"
+```
+
+`.countdown` ignores `expand`, `space`, `spellNumber`, `largestUnit` and
+`maxParts`.
 
 ## Yesterday and weekdays
 
@@ -212,7 +250,24 @@ TimeLabel.dateLabel(yesterday, relativeDays: true)        // "Yesterday"
 TimeLabel.dateLabel(threeDaysAgo, relativeDays: true)     // "Wednesday"
 TimeLabel.dateLabel(twoWeeksAgo, relativeDays: true)      // "Jun 6, 2026"
 TimeLabel.time(Date(), use24Hour: true)                   // "15:30"
+TimeLabel.dateLabel(juneTwentieth, omitCurrentYear: true) // "Jun 20" this year, "Jun 20, 2025" otherwise
 ```
+
+## Dates with times, and time ranges
+
+```swift
+TimeLabel.dateTime(laterToday)                            // "3:30 PM"
+TimeLabel.dateTime(tomorrowAfternoon)                     // "Tomorrow at 3:30 PM"
+TimeLabel.dateTime(lastWednesday, relativeDays: true)     // "Wednesday at 3:30 PM"
+TimeLabel.dateTime(someDate, omitCurrentYear: true)       // "Jun 20 at 3:30 PM"
+
+TimeLabel.timeRange(start, end)                           // "3:30 – 4:15 PM"
+TimeLabel.timeRange(morning, afternoon)                   // "11:00 AM – 1:30 PM"
+TimeLabel.timeRange(start, end, use24Hour: true)          // "15:30 – 16:15"
+```
+
+`timeRange` drops the first AM/PM only when both times are on the same day
+and share it. The separator is an en dash (`–`) with a space on each side.
 
 ## Date extensions
 
@@ -221,8 +276,11 @@ Every function has a `Date` shortcut that forwards to `TimeLabel`:
 ```swift
 post.date.timeAgo()                // TimeLabel.timeAgo(post.date)
 event.date.relative()              // TimeLabel.relative(event.date)
+event.date.timeRemaining()         // TimeLabel.timeRemaining(until: event.date)
 event.date.timeLabel()             // TimeLabel.time(event.date)
+event.start.timeRangeLabel(to: event.end) // TimeLabel.timeRange(event.start, event.end)
 event.date.dateLabel()             // TimeLabel.dateLabel(event.date)
+event.date.dateTimeLabel()         // TimeLabel.dateTime(event.date)
 ```
 
 ## SwiftUI: self-updating labels
@@ -240,8 +298,8 @@ TimeLabelText(refresh: 30) { now in                         // any label you lik
 
 ## Behavior Notes
 
-- **Invalid durations.** `timeRemaining` treats negative and NaN input as 0 and
-  clamps very large or infinite input rather than crashing.
+- **Invalid durations.** `timeRemaining` and `duration` treat negative and NaN
+  input as 0 and clamp very large or infinite input rather than crashing.
 - **Locale.** Formatting uses a fixed `en_US_POSIX` locale and explicit
   patterns, so output is identical across devices, languages and OS versions
   (e.g. always `"3:30 PM"` with a plain space, never `"3:30 p.m."`).

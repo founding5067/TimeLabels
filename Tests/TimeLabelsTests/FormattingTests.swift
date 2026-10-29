@@ -68,3 +68,26 @@ import Foundation
     #expect(TimeLabel.pluralUnit(count: 3, expanded: false, unit: .day) == "d")
     #expect(TimeLabel.pluralUnit(count: 2, expanded: false, unit: .week) == "w")
 }
+
+// MARK: - Unit selection
+
+@Test func components_rounding() {
+    let down = TimeLabel.components(for: 5400, smallest: .minute, largest: .hour)
+    #expect(down.count == 1 && down.unit == .hour)
+    let nearest = TimeLabel.components(for: 5400, smallest: .minute, largest: .hour, rounding: .nearest)
+    #expect(nearest.count == 2 && nearest.unit == .hour)
+    let promoted = TimeLabel.components(for: 3570, smallest: .minute, largest: .hour, rounding: .nearest)
+    #expect(promoted.count == 1 && promoted.unit == .hour)
+    // A largest below smallest is still treated as smallest.
+    let inverted = TimeLabel.components(for: 7200, smallest: .hour, largest: .minute, rounding: .nearest)
+    #expect(inverted.count == 2 && inverted.unit == .hour)
+}
+
+// MARK: - Joining
+
+@Test func joined_onlySpaceAddsASpace() {
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: false, spellNumber: false) == "5mins")
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: true, spellNumber: false) == "5 mins")
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: false, spellNumber: true) == "fivemins")
+    #expect(TimeLabel.joined(count: 5, unitText: "mins", space: true, spellNumber: true) == "five mins")
+}

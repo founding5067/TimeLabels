@@ -9,9 +9,9 @@
 
 ### Layout (one file per concern; tests mirror sources)
 - `Sources/TimeLabels/`
-  - `TimeLabel.swift` — namespace + `Unit`
+  - `TimeLabel.swift` — namespace + `Unit` + `Rounding`
   - `TimeLabel+Relative.swift` — `timeRemaining`, `timeAgo`, `relative`
-  - `TimeLabel+Calendar.swift` — `time`, `dateLabel`
+  - `TimeLabel+Calendar.swift` — `time`, `timeRange`, `dateLabel`, `dateTime`
   - `TimeLabel+Duration.swift` — `duration`
   - `TimeLabel+Formatting.swift` — internal helpers
   - `Date+TimeLabel.swift` — `Date` forwarding extensions (no logic)
