@@ -10,7 +10,7 @@ import SwiftUI
 //   "Relative: flags"        every expand / space / spellNumber combination x every unit
 //   "Relative: unit ranges"  every smallestUnit...largestUnit pair for one fixed gap
 //   "Relative: rounding"     `.down` next to `.nearest` around each rounding edge
-//   "Calendar"               dateLabel, dateTime and timeRange around a pinned day
+//   "Calendar"               dateLabel, dateTime (incl. compact and dotted styles) and timeRange around a pinned day
 //   "TimeLabelText: live"    labels that actually tick (the real TimeLabelText behavior)
 //   "Duration: flags"        the same flag combinations, for `duration`
 //   "Duration: largestUnit"  the caps on the biggest unit and on the number of parts
@@ -257,6 +257,20 @@ private let countdownSeconds: [TimeInterval] = [0, 5, 245, 5400, 36_061]
                     LabeledContent(sample.title) {
                         Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, relativeDays: relativeDays, omitCurrentYear: relativeDays))
                     }
+                }
+            }
+        }
+        Section("dateTime, compact (namesToday + abbreviatedWeekday, \" \")") {
+            ForEach(calendarSamples) { sample in
+                LabeledContent(sample.title) {
+                    Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, relativeDays: true, omitCurrentYear: true, namesToday: true, abbreviatedWeekday: true, separator: " "))
+                }
+            }
+        }
+        Section("dateTime, dotted (includesWeekday + abbreviatedWeekday, \" · \")") {
+            ForEach(calendarSamples) { sample in
+                LabeledContent(sample.title) {
+                    Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, omitCurrentYear: true, includesWeekday: true, abbreviatedWeekday: true, separator: " · "))
                 }
             }
         }

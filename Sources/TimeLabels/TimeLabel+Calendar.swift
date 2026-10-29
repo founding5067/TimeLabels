@@ -47,27 +47,39 @@ extension TimeLabel {
     /// further out stays a medium-style date.
     /// `omitCurrentYear: true` leaves the year off dates in the same year as
     /// `now` ("Jun 20"); dates in other years keep it ("Jun 20, 2025").
-    public static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false) -> String {
+    /// `namesToday: true` returns "Today" instead of an empty string.
+    /// `includesWeekday: true` puts the weekday in front of dated labels
+    /// ("Saturday, Jun 20"); "Today", "Tomorrow", "Yesterday" and the
+    /// `relativeDays` weekday names are left as they are.
+    /// `abbreviatedWeekday: true` shortens every weekday name to three letters
+    /// ("Sat", "Sat, Jun 20").
+    public static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false, namesToday: Bool = false, includesWeekday: Bool = false, abbreviatedWeekday: Bool = false) -> String {
+        let today = namesToday ? "Today" : ""
+        let dated = { () -> String in
+            let medium = mediumDate(date, now: now, calendar: calendar, omitCurrentYear: omitCurrentYear)
+            guard includesWeekday else { return medium }
+            return "\(weekday(date, calendar: calendar, abbreviated: abbreviatedWeekday)), \(medium)"
+        }
         if relativeDays {
-            let today = calendar.startOfDay(for: now)
+            let start = calendar.startOfDay(for: now)
             let target = calendar.startOfDay(for: date)
-            let days = calendar.dateComponents([.day], from: today, to: target).day ?? 0
+            let days = calendar.dateComponents([.day], from: start, to: target).day ?? 0
             switch days {
-            case 0: return ""
+            case 0: return today
             case 1: return "Tomorrow"
             case -1: return "Yesterday"
-            case 2...6, -6 ... -2: return makeFormatter("EEEE", calendar: calendar).string(from: date)
-            default: return mediumDate(date, now: now, calendar: calendar, omitCurrentYear: omitCurrentYear)
+            case 2...6, -6 ... -2: return weekday(date, calendar: calendar, abbreviated: abbreviatedWeekday)
+            default: return dated()
             }
         }
         if calendar.isDate(date, inSameDayAs: now) {
-            return ""
+            return today
         }
         if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now),
            calendar.isDate(date, inSameDayAs: tomorrow) {
             return "Tomorrow"
         }
-        return mediumDate(date, now: now, calendar: calendar, omitCurrentYear: omitCurrentYear)
+        return dated()
     }
 
     // MARK: - Date and time
@@ -76,10 +88,15 @@ extension TimeLabel {
     /// or "Jun 20, 2026 at 3:30 PM". `relativeDays` and `omitCurrentYear` work
     /// as in `dateLabel` ("Yesterday at 3:30 PM", "Monday at 3:30 PM",
     /// "Jun 20 at 3:30 PM"), and `use24Hour` as in `time` ("Tomorrow at 15:30").
-    public static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false) -> String {
-        let day = dateLabel(date, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear)
+    /// `namesToday`, `includesWeekday` and `abbreviatedWeekday` also work as in
+    /// `dateLabel` ("Today at 3:30 PM", "Sat, Jun 20 at 3:30 PM").
+    /// `separator` goes between the date and the time, as given: " at " by
+    /// default, or for example " · " ("Tomorrow · 3:30 PM") or " "
+    /// ("Sat 3:30 PM"). Today's time stands alone unless `namesToday` is on.
+    public static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false, namesToday: Bool = false, includesWeekday: Bool = false, abbreviatedWeekday: Bool = false, separator: String = " at ") -> String {
+        let day = dateLabel(date, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear, namesToday: namesToday, includesWeekday: includesWeekday, abbreviatedWeekday: abbreviatedWeekday)
         let clock = time(date, calendar: calendar, use24Hour: use24Hour)
-        return day.isEmpty ? clock : "\(day) at \(clock)"
+        return day.isEmpty ? clock : "\(day)\(separator)\(clock)"
     }
 
     // MARK: - Helpers
@@ -89,5 +106,9 @@ extension TimeLabel {
             return makeFormatter("MMM d", calendar: calendar).string(from: date)
         }
         return makeDateLabelFormatter(calendar: calendar).string(from: date)
+    }
+
+    private static func weekday(_ date: Date, calendar: Calendar, abbreviated: Bool) -> String {
+        makeFormatter(abbreviated ? "EEE" : "EEEE", calendar: calendar).string(from: date)
     }
 }

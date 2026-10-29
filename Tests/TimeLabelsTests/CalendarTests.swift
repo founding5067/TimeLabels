@@ -228,3 +228,85 @@ import Foundation
     #expect(TimeLabel.dateTime(ago(2 * day), now: fixedDate, calendar: utc, relativeDays: true) == "Wednesday at 3:30 PM")
     #expect(TimeLabel.dateTime(ahead(day), now: fixedDate, calendar: utc, use24Hour: true) == "Tomorrow at 15:30")
 }
+
+// MARK: - dateLabel namesToday, includesWeekday, abbreviatedWeekday
+
+@Test func dateLabel_namesToday() {
+    let utc = utcCalendar()
+    #expect(TimeLabel.dateLabel(fixedDate, now: fixedDate, calendar: utc, namesToday: true) == "Today")
+    #expect(TimeLabel.dateLabel(fixedDate, now: fixedDate, calendar: utc, relativeDays: true, namesToday: true) == "Today")
+    // Other days are unchanged.
+    #expect(TimeLabel.dateLabel(ahead(day), now: fixedDate, calendar: utc, namesToday: true) == "Tomorrow")
+    #expect(TimeLabel.dateLabel(ahead(2 * day), now: fixedDate, calendar: utc, namesToday: true) == "Jan 3, 2021")
+}
+
+@Test func dateLabel_abbreviatedWeekday() {
+    let utc = utcCalendar()
+    func label(_ d: Date) -> String {
+        TimeLabel.dateLabel(d, now: fixedDate, calendar: utc, relativeDays: true, abbreviatedWeekday: true)
+    }
+    #expect(label(ahead(2 * day)) == "Sun")
+    #expect(label(ahead(6 * day)) == "Thu")
+    #expect(label(ago(2 * day)) == "Wed")
+    // Named days and dates are unchanged.
+    #expect(label(ahead(day)) == "Tomorrow")
+    #expect(label(ago(day)) == "Yesterday")
+    #expect(label(ahead(7 * day)) == "Jan 8, 2021")
+}
+
+@Test func dateLabel_includesWeekday() {
+    let utc = utcCalendar()
+    func label(_ d: Date, relativeDays: Bool = false, abbreviated: Bool = false) -> String {
+        TimeLabel.dateLabel(d, now: fixedDate, calendar: utc, relativeDays: relativeDays, omitCurrentYear: true, includesWeekday: true, abbreviatedWeekday: abbreviated)
+    }
+    #expect(label(ahead(2 * day)) == "Sunday, Jan 3")
+    #expect(label(ahead(2 * day), abbreviated: true) == "Sun, Jan 3")
+    #expect(label(ago(day), abbreviated: true) == "Thu, Dec 31, 2020")
+    // Today, tomorrow and relativeDays weekday names don't get a second weekday.
+    #expect(label(fixedDate) == "")
+    #expect(label(ahead(day)) == "Tomorrow")
+    #expect(label(ahead(2 * day), relativeDays: true) == "Sunday")
+    #expect(label(ahead(8 * day), relativeDays: true, abbreviated: true) == "Sat, Jan 9")
+    // Without omitCurrentYear the full medium date follows the weekday.
+    #expect(TimeLabel.dateLabel(ahead(2 * day), now: fixedDate, calendar: utc, includesWeekday: true) == "Sunday, Jan 3, 2021")
+}
+
+@Test func dateLabel_weekdayHonorsTimezone() {
+    // 15:30 UTC Friday is already 00:30 Saturday in Tokyo.
+    let tokyo = calendar("Asia/Tokyo")
+    #expect(TimeLabel.dateLabel(ahead(7 * day), now: ago(7 * day), calendar: tokyo, includesWeekday: true, abbreviatedWeekday: true) == "Sat, Jan 9, 2021")
+}
+
+// MARK: - dateTime separator and new options
+
+@Test func dateTime_separator() {
+    let utc = utcCalendar()
+    #expect(TimeLabel.dateTime(ahead(day), now: fixedDate, calendar: utc, separator: " · ") == "Tomorrow · 3:30 PM")
+    #expect(TimeLabel.dateTime(ahead(day), now: fixedDate, calendar: utc, separator: " ") == "Tomorrow 3:30 PM")
+    // Today's time stands alone, so the separator isn't used.
+    #expect(TimeLabel.dateTime(fixedDate, now: fixedDate, calendar: utc, separator: " · ") == "3:30 PM")
+    #expect(TimeLabel.dateTime(fixedDate, now: fixedDate, calendar: utc, namesToday: true, separator: " ") == "Today 3:30 PM")
+    #expect(TimeLabel.dateTime(fixedDate, now: fixedDate, calendar: utc, namesToday: true) == "Today at 3:30 PM")
+}
+
+@Test func dateTime_compactLabels() {
+    let utc = utcCalendar()
+    // A tight widget line: "Today 3:30 PM", "Sun 3:30 PM", "Jan 8 3:30 PM".
+    func compact(_ d: Date, use24Hour: Bool = false) -> String {
+        TimeLabel.dateTime(d, now: fixedDate, calendar: utc, use24Hour: use24Hour, relativeDays: true, omitCurrentYear: true, namesToday: true, abbreviatedWeekday: true, separator: " ")
+    }
+    #expect(compact(fixedDate) == "Today 3:30 PM")
+    #expect(compact(ahead(day)) == "Tomorrow 3:30 PM")
+    #expect(compact(ahead(2 * day)) == "Sun 3:30 PM")
+    #expect(compact(ahead(7 * day)) == "Jan 8 3:30 PM")
+    #expect(compact(ahead(2 * day), use24Hour: true) == "Sun 15:30")
+
+    // A notification line: "3:30 PM", "Tomorrow · 3:30 PM", "Sun, Jan 3 · 3:30 PM".
+    func dotted(_ d: Date, use24Hour: Bool = false) -> String {
+        TimeLabel.dateTime(d, now: fixedDate, calendar: utc, use24Hour: use24Hour, omitCurrentYear: true, includesWeekday: true, abbreviatedWeekday: true, separator: " · ")
+    }
+    #expect(dotted(fixedDate) == "3:30 PM")
+    #expect(dotted(ahead(day)) == "Tomorrow · 3:30 PM")
+    #expect(dotted(ahead(2 * day)) == "Sun, Jan 3 · 3:30 PM")
+    #expect(dotted(ago(day), use24Hour: true) == "Thu, Dec 31, 2020 · 15:30")
+}

@@ -28,3 +28,13 @@ import Foundation
     #expect(ahead(day).dateTimeLabel(now: fixedDate, calendar: utc) == "Tomorrow at 3:30 PM")
     #expect(ago(day).dateTimeLabel(now: fixedDate, calendar: utc, use24Hour: true, relativeDays: true) == "Yesterday at 15:30")
 }
+
+@Test func dateExtensions_forwardWeekdayAndSeparatorOptions() {
+    let utc = utcCalendar()
+    #expect(fixedDate.dateLabel(now: fixedDate, calendar: utc, namesToday: true) == "Today")
+    #expect(ahead(2 * day).dateLabel(now: fixedDate, calendar: utc, relativeDays: true, abbreviatedWeekday: true) == "Sun")
+    #expect(ahead(2 * day).dateLabel(now: fixedDate, calendar: utc, omitCurrentYear: true, includesWeekday: true) == "Sunday, Jan 3")
+    #expect(ahead(day).dateTimeLabel(now: fixedDate, calendar: utc, separator: " · ") == "Tomorrow · 3:30 PM")
+    #expect(fixedDate.dateTimeLabel(now: fixedDate, calendar: utc, namesToday: true, separator: " ") == "Today 3:30 PM")
+    #expect(ahead(2 * day).dateTimeLabel(now: fixedDate, calendar: utc, omitCurrentYear: true, includesWeekday: true, abbreviatedWeekday: true) == "Sun, Jan 3 at 3:30 PM")
+}
