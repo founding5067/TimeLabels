@@ -21,10 +21,12 @@ extension TimeLabel {
     // an explicit `dateFormat` keeps output identical across devices and OS
     // updates (a `.short` style would pick up CLDR changes such as U+202F
     // before AM/PM). It's `internal` so tests can assert the configuration.
+    // Only the calendar's timezone is used: dates are always written in
+    // Gregorian, even for a Hebrew or Japanese `calendar`.
     internal static func makeFormatter(_ pattern: String, calendar: Calendar) -> DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = calendar
+        formatter.calendar = gregorianCalendar(timeZoneOf: calendar)
         // `dateFormat` output uses the formatter's own `timeZone` property (not
         // the calendar's), so set it explicitly — otherwise output shifts by
         // the host machine's timezone.
@@ -33,8 +35,18 @@ extension TimeLabel {
         return formatter
     }
 
+    // The medium-style date: "Jun 20, 2026".
+    internal static let dateLabelPattern = "MMM d, yyyy"
+
     internal static func makeDateLabelFormatter(calendar: Calendar) -> DateFormatter {
-        makeFormatter("MMM d, yyyy", calendar: calendar)
+        makeFormatter(dateLabelPattern, calendar: calendar)
+    }
+
+    // A Gregorian calendar in `calendar`'s timezone.
+    internal static func gregorianCalendar(timeZoneOf calendar: Calendar) -> Calendar {
+        var gregorian = Calendar(identifier: .gregorian)
+        gregorian.timeZone = calendar.timeZone
+        return gregorian
     }
 
     // MARK: - Clamping & unit selection

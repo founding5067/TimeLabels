@@ -31,10 +31,11 @@ import Foundation
 
 @Test func dateExtensions_forwardWeekdayAndSeparatorOptions() {
     let utc = utcCalendar()
-    #expect(fixedDate.dateLabel(now: fixedDate, calendar: utc, namesToday: true) == "Today")
-    #expect(ahead(2 * day).dateLabel(now: fixedDate, calendar: utc, relativeDays: true, abbreviatedWeekday: true) == "Sun")
-    #expect(ahead(2 * day).dateLabel(now: fixedDate, calendar: utc, omitCurrentYear: true, includesWeekday: true) == "Sunday, Jan 3")
+    #expect(fixedDate.dateLabel(now: fixedDate, calendar: utc, nameToday: true) == "Today")
+    #expect(ahead(2 * day).dateLabel(now: fixedDate, calendar: utc, relativeDays: true, abbreviateWeekday: true) == "Sun")
+    #expect(ahead(2 * day).dateLabel(now: fixedDate, calendar: utc, omitCurrentYear: true, includeWeekday: true) == "Sunday, Jan 3")
     #expect(ahead(day).dateTimeLabel(now: fixedDate, calendar: utc, separator: " · ") == "Tomorrow · 3:30 PM")
-    #expect(fixedDate.dateTimeLabel(now: fixedDate, calendar: utc, namesToday: true, separator: " ") == "Today 3:30 PM")
-    #expect(ahead(2 * day).dateTimeLabel(now: fixedDate, calendar: utc, omitCurrentYear: true, includesWeekday: true, abbreviatedWeekday: true) == "Sun, Jan 3 at 3:30 PM")
+    #expect(ahead(7 * day).dateTimeLabel(now: fixedDate, calendar: utc, omitCurrentYear: true, separator: " ", datedSeparator: ", ") == "Jan 8, 3:30 PM")
+    #expect(fixedDate.dateTimeLabel(now: fixedDate, calendar: utc, nameToday: true, separator: " ") == "Today 3:30 PM")
+    #expect(ahead(2 * day).dateTimeLabel(now: fixedDate, calendar: utc, omitCurrentYear: true, includeWeekday: true, abbreviateWeekday: true) == "Sun, Jan 3 at 3:30 PM")
 }

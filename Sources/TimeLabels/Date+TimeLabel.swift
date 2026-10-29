@@ -37,13 +37,28 @@ extension Date {
         TimeLabel.timeRange(self, end, calendar: calendar, use24Hour: use24Hour)
     }
 
-    /// See `TimeLabel.dateLabel(_:now:calendar:relativeDays:omitCurrentYear:namesToday:includesWeekday:abbreviatedWeekday:)`.
-    public func dateLabel(now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false, namesToday: Bool = false, includesWeekday: Bool = false, abbreviatedWeekday: Bool = false) -> String {
-        TimeLabel.dateLabel(self, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear, namesToday: namesToday, includesWeekday: includesWeekday, abbreviatedWeekday: abbreviatedWeekday)
+    /// See `TimeLabel.dateLabel(_:now:calendar:relativeDays:omitCurrentYear:nameToday:includeWeekday:abbreviateWeekday:)`.
+    public func dateLabel(now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String {
+        TimeLabel.dateLabel(self, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear, nameToday: nameToday, includeWeekday: includeWeekday, abbreviateWeekday: abbreviateWeekday)
     }
 
-    /// See `TimeLabel.dateTime(_:now:calendar:use24Hour:relativeDays:omitCurrentYear:namesToday:includesWeekday:abbreviatedWeekday:separator:)`.
-    public func dateTimeLabel(now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false, namesToday: Bool = false, includesWeekday: Bool = false, abbreviatedWeekday: Bool = false, separator: String = " at ") -> String {
-        TimeLabel.dateTime(self, now: now, calendar: calendar, use24Hour: use24Hour, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear, namesToday: namesToday, includesWeekday: includesWeekday, abbreviatedWeekday: abbreviatedWeekday, separator: separator)
+    /// See `TimeLabel.dateTime(_:now:calendar:use24Hour:relativeDays:omitCurrentYear:nameToday:includeWeekday:abbreviateWeekday:separator:datedSeparator:)`.
+    public func dateTimeLabel(now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false, separator: String = " at ", datedSeparator: String? = nil) -> String {
+        TimeLabel.dateTime(self, now: now, calendar: calendar, use24Hour: use24Hour, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear, nameToday: nameToday, includeWeekday: includeWeekday, abbreviateWeekday: abbreviateWeekday, separator: separator, datedSeparator: datedSeparator)
+    }
+
+    // MARK: - Earlier signatures
+
+    // The 1.3 forms, kept so code that stores these methods by their 1.3 type
+    // still compiles (see the matching `TimeLabel` overloads).
+
+    /// See `TimeLabel.dateLabel(_:now:calendar:relativeDays:omitCurrentYear:)`.
+    public func dateLabel(now: Date, calendar: Calendar, relativeDays: Bool, omitCurrentYear: Bool) -> String {
+        TimeLabel.dateLabel(self, now: now, calendar: calendar, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear)
+    }
+
+    /// See `TimeLabel.dateTime(_:now:calendar:use24Hour:relativeDays:omitCurrentYear:)`.
+    public func dateTimeLabel(now: Date, calendar: Calendar, use24Hour: Bool, relativeDays: Bool, omitCurrentYear: Bool) -> String {
+        TimeLabel.dateTime(self, now: now, calendar: calendar, use24Hour: use24Hour, relativeDays: relativeDays, omitCurrentYear: omitCurrentYear)
     }
 }

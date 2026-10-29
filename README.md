@@ -19,8 +19,8 @@ UI — "In 2h", "5mins ago", "3:30 PM", "Tomorrow" — without duplicating
 - `duration(_:)` — a plain length of time ("1h 30m", or timer-style "1:30:00"), from seconds or a Swift `Duration`, optionally trimmed with `maxParts:` ("27h 46m")
 - `time(_:)` — short clock time ("3:30 PM", or "15:30" with `use24Hour: true`)
 - `timeRange(_:_:)` — a span of clock times ("3:30 – 4:15 PM" / "11:00 AM – 1:30 PM")
-- `dateLabel(_:)` — contextual date label ("" for today, "Tomorrow", else "Jun 20, 2026"; with `relativeDays: true` also "Yesterday" and weekday names; with `omitCurrentYear: true` "Jun 20" for this year; `namesToday:`, `includesWeekday:` and `abbreviatedWeekday:` for "Today", "Sat, Jun 20" and "Sat")
-- `dateTime(_:)` — date and time together ("Tomorrow at 3:30 PM"), with a custom `separator:` ("Tomorrow · 3:30 PM", "Sat 3:30 PM")
+- `dateLabel(_:)` — contextual date label ("" for today, "Tomorrow", else "Jun 20, 2026"; with `relativeDays: true` also "Yesterday" and weekday names; with `omitCurrentYear: true` "Jun 20" for this year; `nameToday:`, `includeWeekday:` and `abbreviateWeekday:` for "Today", "Sat, Jun 20" and "Sat")
+- `dateTime(_:)` — date and time together ("Tomorrow at 3:30 PM"), with a custom `separator:` ("Tomorrow · 3:30 PM", "Sat 3:30 PM") and `datedSeparator:` for after dates ("Jun 20, 3:30 PM")
 - Seconds, days and weeks via `smallestUnit:` / `largestUnit:` ("30s ago", "3d ago", "2w ago")
 - Round to the nearest unit with `rounding: .nearest` (90 minutes reads "2h ago" instead of "1h ago")
 - `Date` extensions (`date.timeAgo()`, `date.relative()`, ...) and a self-updating SwiftUI `TimeLabelText`
@@ -126,8 +126,8 @@ TimeLabel.timeAgo(now.addingTimeInterval(-300), now: now) // "5mins ago"
 | `duration` (Swift `Duration`) | `static func duration(_ duration: Duration, style: DurationStyle = .compact, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, largestUnit: Unit = .hour, maxParts: Int? = nil) -> String` | The same as above, e.g. `.seconds(5400)` gives `"1h 30m"` |
 | `time` | `static func time(_ date: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | Short clock time, e.g. `"3:30 PM"` (or `"15:30"` with `use24Hour: true`) |
 | `timeRange` | `static func timeRange(_ start: Date, _ end: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | `"3:30 – 4:15 PM"` (same day and AM/PM) / `"11:00 AM – 1:30 PM"` / `"15:30 – 16:15"` |
-| `dateLabel` | `static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false, namesToday: Bool = false, includesWeekday: Bool = false, abbreviatedWeekday: Bool = false) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `relativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days; with `omitCurrentYear: true`, `"Jun 20"` for dates in the current year; with `namesToday: true`, `"Today"`; with `includesWeekday: true`, `"Saturday, Jun 20"`; with `abbreviatedWeekday: true`, `"Sat"` / `"Sat, Jun 20"`) |
-| `dateTime` | `static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false, namesToday: Bool = false, includesWeekday: Bool = false, abbreviatedWeekday: Bool = false, separator: String = " at ") -> String` | `"3:30 PM"` (today) / `"Tomorrow at 3:30 PM"` / `"Jun 20, 2026 at 3:30 PM"` (with `separator: " · "`, `"Tomorrow · 3:30 PM"`) |
+| `dateLabel` | `static func dateLabel(_ date: Date, now: Date = Date(), calendar: Calendar = .current, relativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `relativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days; with `omitCurrentYear: true`, `"Jun 20"` for dates in the current year; with `nameToday: true`, `"Today"`; with `includeWeekday: true`, `"Saturday, Jun 20"`; with `abbreviateWeekday: true`, `"Sat"` / `"Sat, Jun 20"`) |
+| `dateTime` | `static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, relativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false, separator: String = " at ", datedSeparator: String? = nil) -> String` | `"3:30 PM"` (today) / `"Tomorrow at 3:30 PM"` / `"Jun 20, 2026 at 3:30 PM"` (with `separator: " · "`, `"Tomorrow · 3:30 PM"`; `datedSeparator` replaces `separator` after medium-style dates only) |
 
 The relative helpers take `smallestUnit:` and `largestUnit:` (see **Units**)
 and `rounding:` (see **Rounding**).
@@ -256,14 +256,14 @@ TimeLabel.dateLabel(juneTwentieth, omitCurrentYear: true) // "Jun 20" this year,
 ## Today, short weekdays, and weekday with date
 
 ```swift
-TimeLabel.dateLabel(Date(), namesToday: true)                                // "Today" instead of ""
-TimeLabel.dateLabel(threeDaysAgo, relativeDays: true, abbreviatedWeekday: true) // "Wed"
-TimeLabel.dateLabel(juneTwentieth, omitCurrentYear: true, includesWeekday: true) // "Saturday, Jun 20"
-TimeLabel.dateLabel(juneTwentieth, omitCurrentYear: true, includesWeekday: true,
-                    abbreviatedWeekday: true)                                // "Sat, Jun 20"
+TimeLabel.dateLabel(Date(), nameToday: true)                                // "Today" instead of ""
+TimeLabel.dateLabel(threeDaysAgo, relativeDays: true, abbreviateWeekday: true) // "Wed"
+TimeLabel.dateLabel(juneTwentieth, omitCurrentYear: true, includeWeekday: true) // "Saturday, Jun 20"
+TimeLabel.dateLabel(juneTwentieth, omitCurrentYear: true, includeWeekday: true,
+                    abbreviateWeekday: true)                                // "Sat, Jun 20"
 ```
 
-`includesWeekday` only adds the weekday to dated labels; "Today",
+`includeWeekday` only adds the weekday to dated labels; "Today",
 "Tomorrow", "Yesterday" and the `relativeDays` weekday names stay as they are.
 
 ## Dates with times, and time ranges
@@ -276,11 +276,16 @@ TimeLabel.dateTime(someDate, omitCurrentYear: true)       // "Jun 20 at 3:30 PM"
 
 // Your own separator, for tight or dotted lines:
 TimeLabel.dateTime(tomorrowAfternoon, separator: " · ")   // "Tomorrow · 3:30 PM"
-TimeLabel.dateTime(laterToday, namesToday: true, separator: " ")  // "Today 3:30 PM"
-TimeLabel.dateTime(nextSaturday, relativeDays: true, abbreviatedWeekday: true,
+TimeLabel.dateTime(laterToday, nameToday: true, separator: " ")  // "Today 3:30 PM"
+TimeLabel.dateTime(nextSaturday, relativeDays: true, abbreviateWeekday: true,
                    separator: " ")                        // "Sat 3:30 PM"
-TimeLabel.dateTime(juneTwentieth, omitCurrentYear: true, includesWeekday: true,
-                   abbreviatedWeekday: true, separator: " · ") // "Sat, Jun 20 · 3:30 PM"
+TimeLabel.dateTime(juneTwentieth, omitCurrentYear: true, includeWeekday: true,
+                   abbreviateWeekday: true, separator: " · ") // "Sat, Jun 20 · 3:30 PM"
+
+// A different separator after medium-style dates only:
+TimeLabel.dateTime(nextSaturday, relativeDays: true, omitCurrentYear: true,
+                   abbreviateWeekday: true, separator: " ",
+                   datedSeparator: ", ")                  // "Sat 3:30 PM", but "Jun 20, 3:30 PM"
 
 TimeLabel.timeRange(start, end)                           // "3:30 – 4:15 PM"
 TimeLabel.timeRange(morning, afternoon)                   // "11:00 AM – 1:30 PM"

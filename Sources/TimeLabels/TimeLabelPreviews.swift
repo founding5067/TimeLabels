@@ -260,17 +260,17 @@ private let countdownSeconds: [TimeInterval] = [0, 5, 245, 5400, 36_061]
                 }
             }
         }
-        Section("dateTime, compact (namesToday + abbreviatedWeekday, \" \")") {
+        Section("dateTime, compact (nameToday + abbreviateWeekday, \" \" / \", \")") {
             ForEach(calendarSamples) { sample in
                 LabeledContent(sample.title) {
-                    Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, relativeDays: true, omitCurrentYear: true, namesToday: true, abbreviatedWeekday: true, separator: " "))
+                    Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, relativeDays: true, omitCurrentYear: true, nameToday: true, abbreviateWeekday: true, separator: " ", datedSeparator: ", "))
                 }
             }
         }
-        Section("dateTime, dotted (includesWeekday + abbreviatedWeekday, \" · \")") {
+        Section("dateTime, dotted (includeWeekday + abbreviateWeekday, \" · \")") {
             ForEach(calendarSamples) { sample in
                 LabeledContent(sample.title) {
-                    Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, omitCurrentYear: true, includesWeekday: true, abbreviatedWeekday: true, separator: " · "))
+                    Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, omitCurrentYear: true, includeWeekday: true, abbreviateWeekday: true, separator: " · "))
                 }
             }
         }
