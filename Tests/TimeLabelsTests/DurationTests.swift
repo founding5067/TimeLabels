@@ -90,3 +90,45 @@ import Foundation
     #expect(TimeLabel.duration(-.infinity, spellNumber: true) == "zeros")
     #expect(TimeLabel.duration(.infinity, largestUnit: .week) == TimeLabel.duration(1e15, largestUnit: .week))
 }
+
+// MARK: - maxParts
+
+@Test func duration_maxParts() {
+    #expect(TimeLabel.duration(100_000, maxParts: 2) == "27h 46m")
+    #expect(TimeLabel.duration(3661, maxParts: 2) == "1h 1m")
+    // Counting starts at the largest non-zero unit; an empty unit still uses a part.
+    #expect(TimeLabel.duration(3601, maxParts: 2) == "1h")
+    #expect(TimeLabel.duration(45, maxParts: 1) == "45s")
+    #expect(TimeLabel.duration(788_645, largestUnit: .week, maxParts: 3) == "1w 2d 3h")
+    #expect(TimeLabel.duration(100_000, expand: true, space: true, maxParts: 2) == "27 hours 46 minutes")
+    #expect(TimeLabel.duration(0, maxParts: 1) == "0s")
+}
+
+@Test func duration_maxPartsBounds() {
+    // nil and anything at least as large as the unit count show every part.
+    #expect(TimeLabel.duration(788_645, largestUnit: .week, maxParts: 10) == TimeLabel.duration(788_645, largestUnit: .week))
+    #expect(TimeLabel.duration(788_645, largestUnit: .week, maxParts: nil) == "1w 2d 3h 4m 5s")
+    // Zero and negative values are treated as 1.
+    #expect(TimeLabel.duration(5400, maxParts: 0) == "1h")
+    #expect(TimeLabel.duration(5400, maxParts: -3) == "1h")
+    // The countdown style ignores it.
+    #expect(TimeLabel.duration(5400, style: .countdown, maxParts: 1) == "1:30:00")
+    #expect(TimeLabel.duration(.nan, maxParts: 1) == "0s")
+}
+
+// MARK: - Swift Duration
+
+@Test func duration_swiftDuration() {
+    #expect(TimeLabel.duration(.seconds(5400)) == "1h 30m")
+    #expect(TimeLabel.duration(.seconds(5400)) == TimeLabel.duration(5400))
+    #expect(TimeLabel.duration(.milliseconds(1500)) == "1s")
+    #expect(TimeLabel.duration(.seconds(245), style: .countdown) == "4:05")
+    #expect(TimeLabel.duration(.seconds(100_000), expand: true, space: true, largestUnit: .day, maxParts: 2) == "1 day 3 hours")
+    #expect(TimeLabel.duration(.seconds(5400), space: true, spellNumber: true) == "one h thirty m")
+}
+
+@Test func duration_swiftDurationInvalidInputDoesNotTrap() {
+    #expect(TimeLabel.duration(.seconds(-5)) == "0s")
+    #expect(TimeLabel.duration(.zero - .milliseconds(1)) == "0s")
+    #expect(TimeLabel.duration(.seconds(Int64.max)) == TimeLabel.duration(1e15))
+}

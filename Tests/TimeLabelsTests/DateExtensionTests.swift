@@ -16,3 +16,15 @@ import Foundation
     #expect(ahead(day).dateLabel(now: fixedDate, calendar: utc) == "Tomorrow")
     #expect(ago(day).dateLabel(now: fixedDate, calendar: utc, relativeDays: true) == "Yesterday")
 }
+
+@Test func dateExtensions_forwardNewOptions() {
+    let utc = utcCalendar()
+    #expect(ahead(1800).timeRemaining(now: fixedDate) == "In 30mins")
+    #expect(ahead(5400).timeRemaining(now: fixedDate, rounding: .nearest) == "In 2h")
+    #expect(ago(90 * 60).timeAgo(now: fixedDate, rounding: .nearest) == "2h ago")
+    #expect(ahead(150).relative(now: fixedDate, rounding: .nearest) == "In 3mins")
+    #expect(fixedDate.timeRangeLabel(to: ahead(45 * 60), calendar: utc) == "3:30 – 4:15 PM")
+    #expect(ahead(2 * day).dateLabel(now: fixedDate, calendar: utc, omitCurrentYear: true) == "Jan 3")
+    #expect(ahead(day).dateTimeLabel(now: fixedDate, calendar: utc) == "Tomorrow at 3:30 PM")
+    #expect(ago(day).dateTimeLabel(now: fixedDate, calendar: utc, use24Hour: true, relativeDays: true) == "Yesterday at 15:30")
+}

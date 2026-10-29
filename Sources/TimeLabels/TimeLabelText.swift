@@ -31,9 +31,9 @@ public struct TimeLabelText: View {
 
     /// A live `TimeLabel.relative` label. It refreshes every second when
     /// `smallestUnit` is `.second` and every minute otherwise.
-    public init(relativeTo date: Date, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour) {
+    public init(relativeTo date: Date, expand: Bool = false, space: Bool = false, spellNumber: Bool = false, smallestUnit: TimeLabel.Unit = .minute, largestUnit: TimeLabel.Unit = .hour, rounding: TimeLabel.Rounding = .down) {
         self.init(refresh: smallestUnit == .second ? 1 : 60) { now in
-            TimeLabel.relative(date, now: now, expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit)
+            TimeLabel.relative(date, now: now, expand: expand, space: space, spellNumber: spellNumber, smallestUnit: smallestUnit, largestUnit: largestUnit, rounding: rounding)
         }
     }
 

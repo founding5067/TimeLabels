@@ -268,3 +268,66 @@ private func timeAgo_permutations(_ c: Case) {
     #expect(TimeLabel.timeAgo(now.addingTimeInterval(-86_400), now: now, calendar: ny, largestUnit: .day) == "1d ago")
     #expect(TimeLabel.timeAgo(before, now: now, calendar: ny, largestUnit: .day) == "23h ago")
 }
+
+// MARK: - timeRemaining(until:)
+
+@Test func timeRemainingUntil_matchesSeconds() {
+    #expect(TimeLabel.timeRemaining(until: ahead(1800), now: fixedDate) == "In 30mins")
+    #expect(TimeLabel.timeRemaining(until: ahead(2 * 3600), now: fixedDate, expand: true, space: true) == "In 2 hours")
+    #expect(TimeLabel.timeRemaining(until: ahead(3 * day), now: fixedDate, largestUnit: .day) == "In 3d")
+    #expect(TimeLabel.timeRemaining(until: ahead(45), now: fixedDate, smallestUnit: .second) == "In 45s")
+    for seconds: TimeInterval in [0, 59, 60, 3599, 3600, 100_000] {
+        #expect(TimeLabel.timeRemaining(until: ahead(seconds), now: fixedDate) == TimeLabel.timeRemaining(seconds))
+    }
+}
+
+@Test func timeRemainingUntil_pastDateIsZero() {
+    #expect(TimeLabel.timeRemaining(until: ago(300), now: fixedDate) == "In 0mins")
+    #expect(TimeLabel.timeRemaining(until: fixedDate, now: fixedDate) == "In 0mins")
+}
+
+// MARK: - Rounding
+
+@Test func rounding_defaultTruncates() {
+    #expect(TimeLabel.timeRemaining(90 * 60) == "In 1h")
+    #expect(TimeLabel.timeRemaining(90 * 60, rounding: .down) == "In 1h")
+    #expect(TimeLabel.timeAgo(ago(90 * 60), now: fixedDate) == "1h ago")
+    #expect(TimeLabel.relative(ahead(150), now: fixedDate) == "In 2mins")
+}
+
+@Test func rounding_nearest() {
+    #expect(TimeLabel.timeRemaining(89 * 60, rounding: .nearest) == "In 1h")
+    #expect(TimeLabel.timeRemaining(90 * 60, rounding: .nearest) == "In 2h")
+    #expect(TimeLabel.timeRemaining(29, rounding: .nearest) == "In 0mins")
+    #expect(TimeLabel.timeRemaining(30, rounding: .nearest) == "In 1min")
+    #expect(TimeLabel.timeAgo(ago(90 * 60), now: fixedDate, rounding: .nearest) == "2h ago")
+    #expect(TimeLabel.timeAgo(ago(90), now: fixedDate, rounding: .nearest) == "2mins ago")
+    #expect(TimeLabel.relative(ahead(150), now: fixedDate, rounding: .nearest) == "In 3mins")
+    #expect(TimeLabel.relative(ago(150), now: fixedDate, rounding: .nearest) == "3mins ago")
+    #expect(TimeLabel.timeRemaining(5400, expand: true, space: true, rounding: .nearest) == "In 2 hours")
+}
+
+@Test func rounding_nearestMovesUpAUnit() {
+    // 59.5 minutes rounds to 60, which reads as the next unit up.
+    #expect(TimeLabel.timeRemaining(3570, rounding: .nearest) == "In 1h")
+    // ...unless the range stops there.
+    #expect(TimeLabel.timeRemaining(3570, largestUnit: .minute, rounding: .nearest) == "In 60mins")
+    // 23.6 hours -> 24h -> 1d, and 6.5 days -> 7d -> 1w.
+    #expect(TimeLabel.timeRemaining(84_960, rounding: .nearest) == "In 24h")
+    #expect(TimeLabel.timeRemaining(84_960, largestUnit: .day, rounding: .nearest) == "In 1d")
+    #expect(TimeLabel.timeRemaining(6.5 * day, largestUnit: .week, rounding: .nearest) == "In 1w")
+    #expect(TimeLabel.timeRemaining(59.5, smallestUnit: .second, rounding: .nearest) == "In 1min")
+}
+
+@Test func rounding_nearestKeepsJustNowCutoff() {
+    // "Just now" / "Now" still cover anything under one smallestUnit.
+    #expect(TimeLabel.timeAgo(ago(45), now: fixedDate, rounding: .nearest) == "Just now")
+    #expect(TimeLabel.relative(ahead(45), now: fixedDate, rounding: .nearest) == "Now")
+}
+
+@Test func rounding_nearestInvalidInputDoesNotTrap() {
+    #expect(TimeLabel.timeRemaining(.nan, rounding: .nearest) == "In 0mins")
+    #expect(TimeLabel.timeRemaining(-.infinity, rounding: .nearest) == "In 0mins")
+    #expect(TimeLabel.timeRemaining(.infinity, largestUnit: .week, rounding: .nearest) == TimeLabel.timeRemaining(1e15, largestUnit: .week, rounding: .nearest))
+    #expect(TimeLabel.timeRemaining(1e15, smallestUnit: .second, largestUnit: .second, rounding: .nearest) == "In 1000000000000000s")
+}

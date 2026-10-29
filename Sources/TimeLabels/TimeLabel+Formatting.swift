@@ -9,8 +9,9 @@ import Foundation
 extension TimeLabel {
     // MARK: - Limits
 
-    // Largest duration (in seconds) the relative helpers will format. Anything
-    // bigger (including `.infinity`) is clamped so `Int(...)` can never trap.
+    // Largest duration (in seconds) the relative and duration helpers will
+    // format. Anything bigger (including `.infinity`) is clamped so `Int(...)`
+    // can never trap.
     internal static let maxSeconds: TimeInterval = 1e15
 
     // MARK: - Date formatters
@@ -46,12 +47,25 @@ extension TimeLabel {
 
     // Chooses the largest unit in `smallest...largest` that fits at least once
     // into `seconds` (already clamped), falling back to `smallest`, and returns
-    // the whole-number count of that unit. A `largest` below `smallest` is
-    // treated as `smallest`.
-    internal static func components(for seconds: TimeInterval, smallest: Unit, largest: Unit) -> (count: Int, unit: Unit) {
+    // the count of that unit (truncated, or rounded with `.nearest`). A
+    // `largest` below `smallest` is treated as `smallest`.
+    internal static func components(for seconds: TimeInterval, smallest: Unit, largest: Unit, rounding: Rounding = .down) -> (count: Int, unit: Unit) {
         let whole = Int(seconds)
-        let unit = Unit.allCases.last { $0 >= smallest && $0 <= largest && whole >= $0.seconds } ?? smallest
-        return (whole / unit.seconds, unit)
+        var unit = Unit.allCases.last { $0 >= smallest && $0 <= largest && whole >= $0.seconds } ?? smallest
+        guard rounding == .nearest else { return (whole / unit.seconds, unit) }
+
+        // A rounded count can reach the next unit up (59.5 minutes -> 60), so
+        // keep moving up while it does and the range allows it.
+        var count = roundedCount(seconds, unit)
+        while unit < largest, let next = Unit(rawValue: unit.rawValue + 1), count * unit.seconds >= next.seconds {
+            unit = next
+            count = roundedCount(seconds, unit)
+        }
+        return (count, unit)
+    }
+
+    private static func roundedCount(_ seconds: TimeInterval, _ unit: Unit) -> Int {
+        Int((seconds / TimeInterval(unit.seconds)).rounded(.toNearestOrAwayFromZero))
     }
 
     // MARK: - Phrase building
@@ -60,8 +74,13 @@ extension TimeLabel {
     // Spacing is the caller's choice: `expand` only swaps the compact unit for
     // the full word, it never forces a space.
     internal static func phrase(count: Int, unit: Unit, expand: Bool, space: Bool, spellNumber: Bool) -> String {
+        joined(count: count, unitText: pluralUnit(count: count, expanded: expand, unit: unit), space: space, spellNumber: spellNumber)
+    }
+
+    // Joins a count (digits or spelled out) to an already-chosen unit word.
+    // This is the only place a space between number and unit is decided.
+    internal static func joined(count: Int, unitText: String, space: Bool, spellNumber: Bool) -> String {
         let number = spellNumber ? spelledNumber(count) : String(count)
-        let unitText = pluralUnit(count: count, expanded: expand, unit: unit)
         return "\(number)\(space ? " " : "")\(unitText)"
     }
 

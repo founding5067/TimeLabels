@@ -6,16 +6,19 @@
 import SwiftUI
 
 // Every SwiftUI preview in one self-contained file (Xcode's canvas doesn't
-// reliably see symbols from other files). Six tabs:
+// reliably see symbols from other files). Eight tabs:
 //   "Relative: flags"        every expand / space / spellNumber combination x every unit
 //   "Relative: unit ranges"  every smallestUnit...largestUnit pair for one fixed gap
+//   "Relative: rounding"     `.down` next to `.nearest` around each rounding edge
+//   "Calendar"               dateLabel, dateTime and timeRange around a pinned day
 //   "TimeLabelText: live"    labels that actually tick (the real TimeLabelText behavior)
 //   "Duration: flags"        the same flag combinations, for `duration`
-//   "Duration: largestUnit"  the cap on the biggest unit, for long durations
+//   "Duration: largestUnit"  the caps on the biggest unit and on the number of parts
 //   "Duration: countdown"    the timer style, which ignores every other option
-// "Relative: flags" and "Relative: unit ranges" pin the clock so every string, including "Now" and
-// "Just now", stays on screen instead of changing on the next refresh. The
-// duration tabs are static because `duration` doesn't depend on the current time.
+// The relative and calendar tabs pin the clock so every string, including
+// "Now" and "Just now", stays on screen instead of changing on the next
+// refresh. The duration tabs are static because `duration` doesn't depend
+// on the current time.
 
 // MARK: - Shared preview data
 
@@ -104,6 +107,45 @@ private func pinnedLabel(offset: TimeInterval, expand: Bool = false, space: Bool
     }
 }
 
+// Gaps on either side of a rounding edge, read with both rounding modes.
+private let roundingSamples: [PreviewSample] = [
+    PreviewSample(title: "+2m 29s", seconds: 149),
+    PreviewSample(title: "+2m 30s", seconds: 150),
+    PreviewSample(title: "+59m 30s", seconds: 3570),
+    PreviewSample(title: "+1h 29m", seconds: 89 * 60),
+    PreviewSample(title: "+1h 30m", seconds: 90 * 60),
+    PreviewSample(title: "-1h 30m", seconds: -90 * 60),
+]
+
+// MARK: - Calendar preview data
+
+// The calendar tab reads everything in UTC so the pinned day is the same
+// everywhere: `previewNow` is Friday, Jan 1 2021, 3:30 PM UTC.
+private let previewCalendar: Calendar = {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "UTC")!
+    return calendar
+}()
+
+private let calendarSamples: [PreviewSample] = [
+    PreviewSample(title: "-7 days", seconds: -7 * 86_400),
+    PreviewSample(title: "-2 days", seconds: -2 * 86_400),
+    PreviewSample(title: "-1 day", seconds: -86_400),
+    PreviewSample(title: "Now", seconds: 0),
+    PreviewSample(title: "+1 day", seconds: 86_400),
+    PreviewSample(title: "+2 days", seconds: 2 * 86_400),
+    PreviewSample(title: "+7 days", seconds: 7 * 86_400),
+]
+
+// Start and end offsets (from `previewNow`) for each shape of time range.
+private let rangeSamples: [(title: String, start: TimeInterval, end: TimeInterval)] = [
+    ("Same afternoon", 0, 45 * 60),
+    ("Same morning", -6.5 * 3600, -5.5 * 3600),
+    ("Across noon", -4 * 3600, -3.25 * 3600),
+    ("Across midnight", 8 * 3600, 9 * 3600),
+    ("Next day, same PM", 0, 86_400 + 3600),
+]
+
 // MARK: - Duration preview data
 
 // One sample per output shape: zero, each unit on its own, and mixed lengths.
@@ -187,6 +229,49 @@ private let countdownSeconds: [TimeInterval] = [0, 5, 245, 5400, 36_061]
     }
 }
 
+// MARK: - Relative: rounding preview
+
+#Preview("Relative: rounding") {
+    List {
+        ForEach([TimeLabel.Rounding.down, .nearest], id: \.self) { rounding in
+            Section(rounding == .down ? "rounding: .down" : "rounding: .nearest") {
+                ForEach(roundingSamples) { sample in
+                    LabeledContent(sample.title) {
+                        TimeLabelText { _ in
+                            TimeLabel.relative(previewNow.addingTimeInterval(sample.seconds), now: previewNow, rounding: rounding)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Calendar preview
+
+#Preview("Calendar") {
+    List {
+        ForEach([false, true], id: \.self) { relativeDays in
+            Section(relativeDays ? "dateTime, relativeDays + omitCurrentYear" : "dateTime, defaults") {
+                ForEach(calendarSamples) { sample in
+                    LabeledContent(sample.title) {
+                        Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, relativeDays: relativeDays, omitCurrentYear: relativeDays))
+                    }
+                }
+            }
+        }
+        ForEach([false, true], id: \.self) { use24Hour in
+            Section(use24Hour ? "timeRange, use24Hour" : "timeRange") {
+                ForEach(rangeSamples, id: \.title) { sample in
+                    LabeledContent(sample.title) {
+                        Text(TimeLabel.timeRange(previewNow.addingTimeInterval(sample.start), previewNow.addingTimeInterval(sample.end), calendar: previewCalendar, use24Hour: use24Hour))
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Duration: flags preview
 
 #Preview("Duration: flags") {
@@ -207,6 +292,13 @@ private let countdownSeconds: [TimeInterval] = [0, 5, 245, 5400, 36_061]
                     LabeledContent("largestUnit: .\(String(describing: unit))") {
                         Text(TimeLabel.duration(sample.seconds, largestUnit: unit))
                     }
+                }
+            }
+        }
+        Section("788,645 s, largestUnit: .week, by maxParts") {
+            ForEach(1...5, id: \.self) { parts in
+                LabeledContent("maxParts: \(parts)") {
+                    Text(TimeLabel.duration(788_645, largestUnit: .week, maxParts: parts))
                 }
             }
         }
@@ -231,9 +323,9 @@ private let countdownSeconds: [TimeInterval] = [0, 5, 245, 5400, 36_061]
                 }
             }
         }
-        Section("Ignores expand, space, spellNumber and largestUnit") {
+        Section("Ignores expand, space, spellNumber, largestUnit and maxParts") {
             LabeledContent("5,400 s, every option on") {
-                Text(TimeLabel.duration(5400, style: .countdown, expand: true, space: true, spellNumber: true, largestUnit: .week))
+                Text(TimeLabel.duration(5400, style: .countdown, expand: true, space: true, spellNumber: true, largestUnit: .week, maxParts: 1))
             }
             LabeledContent("5,400 s, defaults") {
                 Text(TimeLabel.duration(5400, style: .countdown))
