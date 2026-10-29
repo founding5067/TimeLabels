@@ -41,7 +41,7 @@ Add the package as a dependency in your `Package.swift`, then resolve it.
 
 1. **File > Add Package Dependencies...**
 2. Enter the repository URL: `https://github.com/founding5067/TimeLabels`
-3. Choose **Dependency Rule: Up to Next Major Version** starting at `1.1.0`
+3. Choose **Dependency Rule: Up to Next Major Version** starting at `1.3.0`
 
 ### Swift Package Manager (command line)
 
@@ -49,7 +49,7 @@ Add the package to the `dependencies` array in your `Package.swift`, and the
 product to your target's dependencies:
 
 ```swift
-.package(url: "https://github.com/founding5067/TimeLabels", from: "1.1.0")
+.package(url: "https://github.com/founding5067/TimeLabels", from: "1.3.0")
 ```
 
 ```swift
