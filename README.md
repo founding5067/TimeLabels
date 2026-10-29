@@ -136,8 +136,11 @@ and `rounding:` (see **Rounding**).
 
 2.0 renames the API so every name follows one scheme: options are a verb
 plus what it acts on, `TimeLabel` functions have no suffix, and each `Date`
-shortcut is the function name plus `Label`. Nothing else changed: the same
-inputs give exactly the same strings.
+shortcut is the function name plus `Label`. Apart from one fix, the same
+inputs give exactly the same strings. The fix: dates are now always written in
+Gregorian, as the Behavior Notes already promised, so passing a non-Gregorian
+`calendar:` (Hebrew, Japanese, ...) gives `"Jan 3, 2021"` where 1.x gave
+`"Tevet 19, 5781"` or `"Jan 3, 0003"`. Gregorian calendars are unaffected.
 
 | 1.x | 2.0 |
 | --- | --- |

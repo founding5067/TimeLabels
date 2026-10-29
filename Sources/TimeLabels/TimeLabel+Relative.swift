@@ -64,7 +64,7 @@ extension TimeLabel {
     public static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String {
         let diff = now.timeIntervalSince(date)
         if diff < 0 {
-            return makeMediumDateFormatter(calendar: calendar).string(from: date)
+            return mediumDate(date, now: now, calendar: calendar)
         }
 
         let clamped = clampedSeconds(diff)

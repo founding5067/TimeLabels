@@ -107,14 +107,4 @@ extension TimeLabel {
         }
         return dated()
     }
-
-    // One formatter for the whole date: "Jun 20, 2026", "Jun 20", or with the
-    // weekday in front, "Sat, Jun 20". The year is compared in Gregorian years,
-    // the same calendar the date is written in.
-    private static func mediumDate(_ date: Date, now: Date, calendar: Calendar, omitCurrentYear: Bool, includeWeekday: Bool, abbreviateWeekday: Bool) -> String {
-        let gregorian = gregorianCalendar(timeZoneOf: calendar)
-        let omitsYear = omitCurrentYear && gregorian.component(.year, from: date) == gregorian.component(.year, from: now)
-        let weekday = includeWeekday ? (abbreviateWeekday ? "EEE, " : "EEEE, ") : ""
-        return makeFormatter(weekday + (omitsYear ? "MMM d" : mediumDatePattern), calendar: calendar).string(from: date)
-    }
 }

@@ -42,6 +42,22 @@ extension TimeLabel {
         makeFormatter(mediumDatePattern, calendar: calendar)
     }
 
+    // The one place a medium-style date is written, for `date`, `dateTime` and
+    // `timeAgo`: "Jun 20, 2026", "Jun 20" with `omitCurrentYear` in `now`'s
+    // year, or with the weekday in front, "Sat, Jun 20". The year is compared
+    // with the formatter's own (Gregorian) calendar, the one it writes in.
+    internal static func mediumDate(_ date: Date, now: Date, calendar: Calendar, omitCurrentYear: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String {
+        let formatter = makeMediumDateFormatter(calendar: calendar)
+        let gregorian: Calendar = formatter.calendar
+        if omitCurrentYear, gregorian.component(.year, from: date) == gregorian.component(.year, from: now) {
+            formatter.dateFormat = "MMM d"
+        }
+        if includeWeekday {
+            formatter.dateFormat = (abbreviateWeekday ? "EEE, " : "EEEE, ") + formatter.dateFormat
+        }
+        return formatter.string(from: date)
+    }
+
     // A Gregorian calendar in `calendar`'s timezone.
     internal static func gregorianCalendar(timeZoneOf calendar: Calendar) -> Calendar {
         var gregorian = Calendar(identifier: .gregorian)
