@@ -24,8 +24,9 @@ UI — "In 2h", "5mins ago", "3:30 PM", "Tomorrow" — without duplicating
 - Seconds, days and weeks via `smallestUnit:` / `largestUnit:` ("30s ago", "3d ago", "2w ago")
 - Round to the nearest unit with `rounding: .nearest` (90 minutes reads "2h ago" instead of "1h ago")
 - `Date` extensions (`date.timeAgoLabel()`, `date.relativeLabel()`, ...) and a self-updating SwiftUI `TimeLabelText`
+- Localizable: pass your own words and locale as a `TimeLabel.Language` (see **Localization**)
 - Thread-safe: no shared mutable state (each call builds its own formatter)
-- Deterministic output: a fixed `en_US_POSIX` locale and pattern so results don't drift with the device locale or OS version
+- Deterministic output by default: a fixed `en_US_POSIX` locale and pattern so results don't drift with the device locale or OS version
 - Testable: every date-based helper (`timeAgo`, `relative`, `timeRemaining(until:)`, `date`, `dateTime`) takes a `now:` parameter
 
 ## Requirements
@@ -118,19 +119,31 @@ TimeLabel.timeAgo(now.addingTimeInterval(-300), now: now) // "5mins ago"
 
 | Function | Signature | Returns |
 | --- | --- | --- |
-| `timeRemaining` | `static func timeRemaining(_ seconds: TimeInterval, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | `"In 30mins"` / `"In 2h"` (or `"In 30minutes"` / `"In 2hours"` with `expandUnits: true`; or `"In 30 mins"` / `"In 2 h"` with `addSpace: true`; or `"In 30 minutes"` / `"In 2 hours"` with `expandUnits: true, addSpace: true`) |
-| `timeRemaining(until:)` | `static func timeRemaining(until date: Date, now: Date = Date(), expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | The same as `timeRemaining`, measured from `now` to `date`; `"In 0mins"` once `date` has passed |
-| `timeAgo` | `static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | `"Just now"` / `"5mins ago"` / `"3h ago"` / a medium-style date for future dates (or `"5minutes ago"` / `"3hours ago"` with `expandUnits: true`; or `"5 mins ago"` / `"3 h ago"` with `addSpace: true`; or `"5 minutes ago"` / `"3 hours ago"` with `expandUnits: true, addSpace: true`) |
-| `relative` | `static func relative(_ date: Date, now: Date = Date(), expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down) -> String` | `"In 5mins"` (future) / `"5mins ago"` (past) / `"Now"` / `"Just now"` |
-| `duration` | `static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil) -> String` | `"1h 30m"` (`.compact`) / `"1:30:00"` (`.countdown`) |
-| `duration` (Swift `Duration`) | `static func duration(_ duration: Duration, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil) -> String` | The same as above, e.g. `.seconds(5400)` gives `"1h 30m"` |
-| `time` | `static func time(_ date: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | Short clock time, e.g. `"3:30 PM"` (or `"15:30"` with `use24Hour: true`) |
-| `timeRange` | `static func timeRange(_ start: Date, _ end: Date, calendar: Calendar = .current, use24Hour: Bool = false) -> String` | `"3:30 – 4:15 PM"` (same day and AM/PM) / `"11:00 AM – 1:30 PM"` / `"15:30 – 16:15"` |
-| `date` | `static func date(_ date: Date, now: Date = Date(), calendar: Calendar = .current, useRelativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `useRelativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days; with `omitCurrentYear: true`, `"Jun 20"` for dates in the current year; with `nameToday: true`, `"Today"`; with `includeWeekday: true`, `"Saturday, Jun 20"`; with `abbreviateWeekday: true`, `"Sat"` / `"Sat, Jun 20"`) |
-| `dateTime` | `static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, useRelativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false, separator: String = " at ", datedSeparator: String? = nil) -> String` | `"3:30 PM"` (today) / `"Tomorrow at 3:30 PM"` / `"Jun 20, 2026 at 3:30 PM"` (with `separator: " · "`, `"Tomorrow · 3:30 PM"`; `datedSeparator` replaces `separator` after medium-style dates only) |
+| `timeRemaining` | `static func timeRemaining(_ seconds: TimeInterval, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down, language: Language = .english) -> String` | `"In 30mins"` / `"In 2h"` (or `"In 30minutes"` / `"In 2hours"` with `expandUnits: true`; or `"In 30 mins"` / `"In 2 h"` with `addSpace: true`; or `"In 30 minutes"` / `"In 2 hours"` with `expandUnits: true, addSpace: true`) |
+| `timeRemaining(until:)` | `static func timeRemaining(until date: Date, now: Date = Date(), expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down, language: Language = .english) -> String` | The same as `timeRemaining`, measured from `now` to `date`; `"In 0mins"` once `date` has passed |
+| `timeAgo` | `static func timeAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down, language: Language = .english) -> String` | `"Just now"` / `"5mins ago"` / `"3h ago"` / a medium-style date for future dates (or `"5minutes ago"` / `"3hours ago"` with `expandUnits: true`; or `"5 mins ago"` / `"3 h ago"` with `addSpace: true`; or `"5 minutes ago"` / `"3 hours ago"` with `expandUnits: true, addSpace: true`) |
+| `relative` | `static func relative(_ date: Date, now: Date = Date(), expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, smallestUnit: Unit = .minute, largestUnit: Unit = .hour, rounding: Rounding = .down, language: Language = .english) -> String` | `"In 5mins"` (future) / `"5mins ago"` (past) / `"Now"` / `"Just now"` |
+| `duration` | `static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil, language: Language = .english) -> String` | `"1h 30m"` (`.compact`) / `"1:30:00"` (`.countdown`) |
+| `duration` (Swift `Duration`) | `static func duration(_ duration: Duration, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil, language: Language = .english) -> String` | The same as above, e.g. `.seconds(5400)` gives `"1h 30m"` |
+| `time` | `static func time(_ date: Date, calendar: Calendar = .current, use24Hour: Bool = false, language: Language = .english) -> String` | Short clock time, e.g. `"3:30 PM"` (or `"15:30"` with `use24Hour: true`) |
+| `timeRange` | `static func timeRange(_ start: Date, _ end: Date, calendar: Calendar = .current, use24Hour: Bool = false, language: Language = .english) -> String` | `"3:30 – 4:15 PM"` (same day and AM/PM) / `"11:00 AM – 1:30 PM"` / `"15:30 – 16:15"` |
+| `date` | `static func date(_ date: Date, now: Date = Date(), calendar: Calendar = .current, useRelativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false, language: Language = .english) -> String` | `""` (today) / `"Tomorrow"` / `"Jun 20, 2026"` (with `useRelativeDays: true`, also `"Yesterday"` and weekday names like `"Monday"` within 6 days; with `omitCurrentYear: true`, `"Jun 20"` for dates in the current year; with `nameToday: true`, `"Today"`; with `includeWeekday: true`, `"Saturday, Jun 20"`; with `abbreviateWeekday: true`, `"Sat"` / `"Sat, Jun 20"`) |
+| `dateTime` | `static func dateTime(_ date: Date, now: Date = Date(), calendar: Calendar = .current, use24Hour: Bool = false, useRelativeDays: Bool = false, omitCurrentYear: Bool = false, nameToday: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false, separator: String? = nil, datedSeparator: String? = nil, language: Language = .english) -> String` | `"3:30 PM"` (today) / `"Tomorrow at 3:30 PM"` / `"Jun 20, 2026 at 3:30 PM"` (with `separator: " · "`, `"Tomorrow · 3:30 PM"`; `datedSeparator` replaces `separator` after medium-style dates only) |
 
 The relative helpers take `smallestUnit:` and `largestUnit:` (see **Units**)
-and `rounding:` (see **Rounding**).
+and `rounding:` (see **Rounding**). The quoted strings above are the default,
+`language: .english` (see **Localization**).
+
+### Localization types
+
+| API | Description |
+| --- | --- |
+| `TimeLabel.Language` | The words and locale used to write labels. Settable properties: `locale`, `future`, `past`, `justNow`, `now`, `today`, `tomorrow`, `yesterday`, `separator`, `unit`. Its `init` takes all of them |
+| `TimeLabel.Language.english` | The default |
+| `TimeLabel.UnitForm` | Which word `unit` is asked for: `.compact` ("h", "mins"), `.expanded` ("hours", with `expandUnits: true`), `.durationCompact` (the short form in `duration`, where English minutes are "m"), `.durationExpanded` (the full word in `duration`) |
+| `TimeLabelText { now, language in }` | A custom live label that receives the environment's language |
+| `View.timeLabelLanguage(_:)` | Sets the language for every `TimeLabelText` inside a view |
+| `EnvironmentValues.timeLabelLanguage` | The same value, to read it with `@Environment` |
 
 ## Migrating from 1.x
 
@@ -351,13 +364,129 @@ TimeLabelText(refresh: 30) { now in                         // any label you lik
 }
 ```
 
+## Localization
+
+TimeLabels ships no translations. You describe a language once, from your own
+app's localized strings, and pass it as `language:`. For example, with a String
+Catalog:
+
+```swift
+import Foundation
+import TimeLabels
+
+extension TimeLabel.Language {
+    static let app = TimeLabel.Language(
+        locale: .current,
+        future: { String(localized: "In \($0)") },
+        past: { String(localized: "\($0) ago") },
+        justNow: String(localized: "Just now"),
+        now: String(localized: "Now"),
+        today: String(localized: "Today"),
+        tomorrow: String(localized: "Tomorrow"),
+        yesterday: String(localized: "Yesterday"),
+        separator: String(localized: " at "),
+        unit: { unit, count, form in
+            let expanded = form == .expanded || form == .durationExpanded
+            switch unit {
+            case .second:
+                return expanded ? String(localized: "unit.seconds \(count)") : String(localized: "unit.s \(count)")
+            case .minute:
+                if form == .durationCompact { return String(localized: "unit.m \(count)") }
+                return expanded ? String(localized: "unit.minutes \(count)") : String(localized: "unit.min \(count)")
+            case .hour:
+                return expanded ? String(localized: "unit.hours \(count)") : String(localized: "unit.h \(count)")
+            case .day:
+                return expanded ? String(localized: "unit.days \(count)") : String(localized: "unit.d \(count)")
+            case .week:
+                return expanded ? String(localized: "unit.weeks \(count)") : String(localized: "unit.w \(count)")
+            }
+        }
+    )
+}
+```
+
+Each `unit.… %lld` key holds **only the word**, chosen by plural rules. A
+String Catalog rejects an ordinary **Vary by Plural** entry that leaves the
+number out, so write these keys as a substitution. Open the `.xcstrings` file
+with **Open As > Source Code** and give each unit key this shape (shown for
+English minutes):
+
+```json
+"unit.minutes %lld" : {
+  "localizations" : {
+    "en" : {
+      "stringUnit" : { "state" : "translated", "value" : "%#@word@" },
+      "substitutions" : {
+        "word" : {
+          "argNum" : 1,
+          "formatSpecifier" : "lld",
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "minute" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "minutes" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Languages with more plural forms add `zero`, `two`, `few` or `many` entries.
+Fill in the English values too, or the key itself is shown.
+
+If your language words a duration differently from an "ago" phrase (German
+"3 Tage", but "vor 3 Tagen"), return separate strings for `.durationExpanded`
+and `.expanded`.
+
+Then pass it in, or set it once for SwiftUI:
+
+```swift
+TimeLabel.timeAgo(post.date, addSpace: true, language: .app)
+event.date.dateTimeLabel(language: .app)
+
+// At the root of your app:
+ContentView().timeLabelLanguage(.app)
+
+// Below it, these use that language:
+TimeLabelText(relativeTo: event.date)
+TimeLabelText { now, language in
+    TimeLabel.timeAgo(post.date, now: now, language: language)
+}
+```
+
+The environment value only reaches `TimeLabelText`. Direct `TimeLabel` calls
+(and the one-argument `TimeLabelText { now in ... }` closure) use `.english`
+unless you pass `language:`.
+
+To change only a few English words, copy the default:
+
+```swift
+var language = TimeLabel.Language.english
+language.justNow = "Moments ago"
+```
+
+What a language with its own locale changes:
+
+- Dates and times use the locale's layouts, e.g. `de_DE` writes "15:30" and
+  "Sonntag, 20. Juni". The clock is 12- or 24-hour as is usual for the locale;
+  `use24Hour: true` forces 24-hour. This output can change between OS versions.
+- `timeRange` always writes both times in full.
+- Spacing is still yours: `addSpace` is off by default in every language, and
+  `duration` parts are separated by one space.
+- `spellNumbers` uses the locale's number words, which don't agree with the
+  noun's gender or case (German gives "eins Minute", not "eine Minute").
+- Numbers written as digits (and `.countdown`) stay `0`–`9`.
+
 ## Behavior Notes
 
 - **Invalid durations.** `timeRemaining` and `duration` treat negative and NaN
   input as 0 and clamp very large or infinite input rather than crashing.
-- **Locale.** Formatting uses a fixed `en_US_POSIX` locale and explicit
-  patterns, so output is identical across devices, languages and OS versions
-  (e.g. always `"3:30 PM"` with a plain space, never `"3:30 p.m."`).
+- **Locale.** By default formatting uses a fixed `en_US_POSIX` locale and
+  explicit patterns, so output is identical across devices, languages and OS
+  versions (e.g. always `"3:30 PM"` with a plain space, never `"3:30 p.m."`).
+  Pass a `language:` to localize (see **Localization**).
 - **Timezone.** Pass a `calendar:` with the timezone you want. When omitted,
   the current timezone is used.
 - **Thread safety.** Each call builds its own formatter and there is no shared

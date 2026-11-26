@@ -6,7 +6,7 @@
 import SwiftUI
 
 // Every SwiftUI preview in one self-contained file (Xcode's canvas doesn't
-// reliably see symbols from other files). Eight tabs:
+// reliably see symbols from other files). Nine tabs:
 //   "Relative: flags"        every expandUnits / addSpace / spellNumbers combination x every unit
 //   "Relative: unit ranges"  every smallestUnit...largestUnit pair for one fixed gap
 //   "Relative: rounding"     `.down` next to `.nearest` around each rounding edge
@@ -15,6 +15,7 @@ import SwiftUI
 //   "Duration: flags"        the same flag combinations, for `duration`
 //   "Duration: largestUnit"  the caps on the biggest unit and on the number of parts
 //   "Duration: countdown"    the timer style, which ignores every other option
+//   "Localized"              a sample German `Language`, passed in and set through the environment
 // The relative and calendar tabs pin the clock so every string, including
 // "Now" and "Just now", stays on screen instead of changing on the next
 // refresh. The duration tabs are static because `duration` doesn't depend
@@ -168,6 +169,33 @@ private let capSamples: [PreviewSample] = [
 ]
 
 private let countdownSeconds: [TimeInterval] = [0, 5, 245, 5400, 36_061]
+
+// MARK: - Localized preview data
+
+// A sample language, written out here only for the preview; an app would build
+// its own from localized strings.
+private let previewGerman = TimeLabel.Language(
+    locale: Locale(identifier: "de_DE"),
+    future: { "in \($0)" },
+    past: { "vor \($0)" },
+    justNow: "Gerade eben",
+    now: "Jetzt",
+    today: "Heute",
+    tomorrow: "Morgen",
+    yesterday: "Gestern",
+    separator: " um ",
+    unit: { unit, count, form in
+        let one = count == 1
+        let expanded = form == .expanded || form == .durationExpanded
+        switch unit {
+        case .second: return expanded ? (one ? "Sekunde" : "Sekunden") : "Sek."
+        case .minute: return expanded ? (one ? "Minute" : "Minuten") : "Min."
+        case .hour: return expanded ? (one ? "Stunde" : "Stunden") : "Std."
+        case .day: return expanded ? (one ? "Tag" : form == .expanded ? "Tagen" : "Tage") : "T."
+        case .week: return expanded ? (one ? "Woche" : "Wochen") : "Wo."
+        }
+    }
+)
 
 // MARK: - Relative: flags preview
 
@@ -346,5 +374,36 @@ private let countdownSeconds: [TimeInterval] = [0, 5, 245, 5400, 36_061]
             }
         }
     }
+}
+
+// MARK: - Localized preview
+
+#Preview("Localized") {
+    List {
+        Section("relative, through the environment") {
+            ForEach(relativeSamples) { sample in
+                LabeledContent(sample.title) {
+                    TimeLabelText { _, language in
+                        TimeLabel.relative(previewNow.addingTimeInterval(sample.seconds), now: previewNow, addSpace: true, smallestUnit: .second, language: language)
+                    }
+                }
+            }
+        }
+        Section("dateTime, passed in") {
+            ForEach(calendarSamples) { sample in
+                LabeledContent(sample.title) {
+                    Text(TimeLabel.dateTime(previewNow.addingTimeInterval(sample.seconds), now: previewNow, calendar: previewCalendar, useRelativeDays: true, nameToday: true, language: previewGerman))
+                }
+            }
+        }
+        Section("duration, passed in") {
+            ForEach(capSamples) { sample in
+                LabeledContent(sample.title) {
+                    Text(TimeLabel.duration(sample.seconds, expandUnits: true, addSpace: true, largestUnit: .week, language: previewGerman))
+                }
+            }
+        }
+    }
+    .timeLabelLanguage(previewGerman)
 }
 #endif

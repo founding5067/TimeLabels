@@ -35,6 +35,20 @@ extension TimeLabel {
         return formatter
     }
 
+    // `makeFormatter` for a given language: the fixed `pattern` for
+    // `en_US_POSIX`, otherwise the language's own layout for `template`.
+    internal static func makeFormatter(_ pattern: String, template: String, calendar: Calendar, language: Language) -> DateFormatter {
+        let formatter = makeFormatter(pattern, calendar: calendar)
+        if !language.usesFixedPatterns {
+            formatter.locale = language.locale
+            // Reassigned so a locale with its own default calendar (Thai,
+            // Saudi Arabian) still writes Gregorian dates.
+            formatter.calendar = gregorianCalendar(timeZoneOf: calendar)
+            formatter.setLocalizedDateFormatFromTemplate(template)
+        }
+        return formatter
+    }
+
     // The medium-style date: "Jun 20, 2026".
     internal static let mediumDatePattern = "MMM d, yyyy"
 
@@ -46,16 +60,22 @@ extension TimeLabel {
     // `timeAgo`: "Jun 20, 2026", "Jun 20" with `omitCurrentYear` in `now`'s
     // year, or with the weekday in front, "Sat, Jun 20". The year is compared
     // with the formatter's own (Gregorian) calendar, the one it writes in.
-    internal static func mediumDate(_ date: Date, now: Date, calendar: Calendar, omitCurrentYear: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String {
-        let formatter = makeMediumDateFormatter(calendar: calendar)
-        let gregorian: Calendar = formatter.calendar
-        if omitCurrentYear, gregorian.component(.year, from: date) == gregorian.component(.year, from: now) {
-            formatter.dateFormat = "MMM d"
-        }
+    internal static func mediumDate(_ date: Date, now: Date, calendar: Calendar, language: Language, omitCurrentYear: Bool = false, includeWeekday: Bool = false, abbreviateWeekday: Bool = false) -> String {
+        let gregorian = gregorianCalendar(timeZoneOf: calendar)
+        let omitYear = omitCurrentYear && gregorian.component(.year, from: date) == gregorian.component(.year, from: now)
+        var pattern = omitYear ? "MMM d" : mediumDatePattern
+        var template = omitYear ? "MMMd" : "yMMMd"
         if includeWeekday {
-            formatter.dateFormat = (abbreviateWeekday ? "EEE, " : "EEEE, ") + formatter.dateFormat
+            let weekday = weekdayPattern(abbreviated: abbreviateWeekday)
+            pattern = "\(weekday), \(pattern)"
+            template = weekday + template
         }
-        return formatter.string(from: date)
+        return makeFormatter(pattern, template: template, calendar: calendar, language: language).string(from: date)
+    }
+
+    // "Sat" or "Saturday", as both a pattern and a template.
+    internal static func weekdayPattern(abbreviated: Bool) -> String {
+        abbreviated ? "EEE" : "EEEE"
     }
 
     // A Gregorian calendar in `calendar`'s timezone.
@@ -102,32 +122,32 @@ extension TimeLabel {
     // "<number><unit>" shared by `timeRemaining`, `timeAgo` and `relative`.
     // Spacing is the caller's choice: `expandUnits` only swaps the compact unit
     // for the full word, it never forces a space.
-    internal static func phrase(count: Int, unit: Unit, expandUnits: Bool, addSpace: Bool, spellNumbers: Bool) -> String {
-        joined(count: count, unitText: pluralUnit(count: count, expandUnits: expandUnits, unit: unit), addSpace: addSpace, spellNumbers: spellNumbers)
+    internal static func phrase(count: Int, unit: Unit, expandUnits: Bool, addSpace: Bool, spellNumbers: Bool, language: Language) -> String {
+        joined(count: count, unitText: language.unit(unit, count, expandUnits ? .expanded : .compact), addSpace: addSpace, spellNumbers: spellNumbers, locale: language.locale)
     }
 
     // Joins a count (digits or spelled out) to an already-chosen unit word.
     // This is the only place a space between number and unit is decided.
-    internal static func joined(count: Int, unitText: String, addSpace: Bool, spellNumbers: Bool) -> String {
-        let number = spellNumbers ? spelledNumber(count) : String(count)
+    internal static func joined(count: Int, unitText: String, addSpace: Bool, spellNumbers: Bool, locale: Locale = Language.english.locale) -> String {
+        let number = spellNumbers ? spelledNumber(count, locale: locale) : String(count)
         return "\(number)\(addSpace ? " " : "")\(unitText)"
     }
 
-    // Spells integers into words ("25" -> "twenty-five"). Locale is pinned to
-    // `en_US_POSIX` so the words are always the same English words. A formatter
-    // is built per call because it is only used when `spellNumbers` is on.
-    internal static func spelledNumber(_ count: Int) -> String {
+    // Spells integers into words ("25" -> "twenty-five") in `locale`'s
+    // language; the default is `en_US_POSIX`, so English. A formatter is built
+    // per call because it is only used when `spellNumbers` is on.
+    internal static func spelledNumber(_ count: Int, locale: Locale = Language.english.locale) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .spellOut
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = locale
         // Foundation's `spellOut` spells every in-range integer, so
         // `string(for:)` is never nil; a nil here would be a real Foundation
         // bug worth crashing loudly on rather than emitting a wrong label.
         return formatter.string(for: count)!
     }
 
-    // Picks the unit word for a count. Compact seconds, hours, days and weeks
-    // are invariant ("s", "h", "d", "w"); minutes use "min"/"mins". The
+    // Picks the English unit word for a count, for `Language.english`.
+    // Compact seconds, hours, days and weeks are invariant ("s", "h", "d", "w"); minutes use "min"/"mins". The
     // expanded form uses full words with the correct singular/plural
     // ("minute"/"minutes", "hour"/"hours", ...).
     internal static func pluralUnit(count: Int, expandUnits: Bool, unit: Unit) -> String {

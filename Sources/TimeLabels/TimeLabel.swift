@@ -15,6 +15,7 @@ import Foundation
 //   TimeLabel+Relative.swift    timeRemaining, timeAgo, relative
 //   TimeLabel+Calendar.swift    time, timeRange, date, dateTime
 //   TimeLabel+Duration.swift    DurationStyle, duration
+//   TimeLabel+Language.swift    Language, UnitForm
 //   TimeLabel+Formatting.swift  internal shared helpers
 //   Date+TimeLabel.swift        `Date` forwarding extensions
 //   TimeLabelText.swift         self-refreshing SwiftUI view
