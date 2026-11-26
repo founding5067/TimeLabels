@@ -44,12 +44,12 @@ extension TimeLabel {
     ///   seconds into "1h" (the empty minutes count as one of the two). The
     ///   default `nil` shows every unit; values below 1 are treated as 1.
     /// - `.countdown`: "1:30:00" for an hour or more, otherwise "4:05".
-    ///   `expandUnits`, `addSpace`, `spellNumbers`, `largestUnit` and `maximumParts` are
-    ///   ignored.
+    ///   `expandUnits`, `addSpace`, `spellNumbers`, `largestUnit`, `maximumParts` and
+    ///   `language` are ignored.
     ///
     /// Negative and NaN inputs are treated as 0, and very large or infinite
     /// inputs are clamped, so this never traps.
-    public static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil) -> String {
+    public static func duration(_ seconds: TimeInterval, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil, language: Language = .english) -> String {
         let total = Int(clampedSeconds(seconds))
 
         switch style.mode {
@@ -73,7 +73,7 @@ extension TimeLabel {
                 let count = remainder / unit.seconds
                 remainder %= unit.seconds
                 if count > 0 {
-                    words.append(compactPart(count: count, unit: unit, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers))
+                    words.append(compactPart(count: count, unit: unit, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers, language: language))
                 }
                 if !words.isEmpty {
                     partsLeft -= 1
@@ -81,7 +81,7 @@ extension TimeLabel {
                 }
             }
             if words.isEmpty {
-                words = [compactPart(count: 0, unit: .second, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers)]
+                words = [compactPart(count: 0, unit: .second, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers, language: language)]
             }
             return words.joined(separator: " ")
         }
@@ -90,17 +90,17 @@ extension TimeLabel {
     /// The same as `duration(_:style:expandUnits:addSpace:spellNumbers:largestUnit:maximumParts:)`,
     /// for a Swift `Duration` such as `.seconds(90)` or the difference between
     /// two `ContinuousClock.Instant`s. Sub-second precision is truncated.
-    public static func duration(_ duration: Duration, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil) -> String {
+    public static func duration(_ duration: Duration, style: DurationStyle = .compact, expandUnits: Bool = false, addSpace: Bool = false, spellNumbers: Bool = false, largestUnit: Unit = .hour, maximumParts: Int? = nil, language: Language = .english) -> String {
         let (seconds, attoseconds) = duration.components
-        return self.duration(Double(seconds) + Double(attoseconds) / 1e18, style: style, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers, largestUnit: largestUnit, maximumParts: maximumParts)
+        return self.duration(Double(seconds) + Double(attoseconds) / 1e18, style: style, expandUnits: expandUnits, addSpace: addSpace, spellNumbers: spellNumbers, largestUnit: largestUnit, maximumParts: maximumParts, language: language)
     }
 
     // MARK: - Helpers
 
-    // Compact durations use "m" for minutes (not "min") so "1h 30m" stays short.
-    private static func compactPart(count: Int, unit: Unit, expandUnits: Bool, addSpace: Bool, spellNumbers: Bool) -> String {
-        let unitText = !expandUnits && unit == .minute ? "m" : pluralUnit(count: count, expandUnits: expandUnits, unit: unit)
-        return joined(count: count, unitText: unitText, addSpace: addSpace, spellNumbers: spellNumbers)
+    // Durations ask for their own short form so English "1h 30m" stays short.
+    private static func compactPart(count: Int, unit: Unit, expandUnits: Bool, addSpace: Bool, spellNumbers: Bool, language: Language) -> String {
+        let unitText = language.unit(unit, count, expandUnits ? .durationExpanded : .durationCompact)
+        return joined(count: count, unitText: unitText, addSpace: addSpace, spellNumbers: spellNumbers, locale: language.locale)
     }
 
     private static func twoDigits(_ value: Int) -> String {

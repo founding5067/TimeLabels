@@ -13,6 +13,7 @@
   - `TimeLabel+Relative.swift` — `timeRemaining`, `timeAgo`, `relative`
   - `TimeLabel+Calendar.swift` — `time`, `timeRange`, `date`, `dateTime`
   - `TimeLabel+Duration.swift` — `DurationStyle` + `duration`
+  - `TimeLabel+Language.swift` — `Language` + `UnitForm`
   - `TimeLabel+Formatting.swift` — internal helpers
   - `Date+TimeLabel.swift` — `Date` forwarding extensions (no logic), each named after its `TimeLabel` function plus `Label`
   - `TimeLabelText.swift` — the SwiftUI view, inside `#if canImport(SwiftUI)`
@@ -21,7 +22,7 @@
 
 ### Conventions
 - **Never change existing output.** New behavior is opt-in via new parameters whose defaults reproduce today's strings exactly. The existing tests are the regression guard; don't edit their expectations. The one exception is output that contradicts what the README promises (a bug): fix it only in a major release, and list it in the README's migration notes and the release notes.
-- Output is deterministic: `en_US_POSIX` locale + explicit `dateFormat` patterns, Gregorian calendar; `calendar:` only sets the timezone.
+- Default output is deterministic: `en_US_POSIX` locale + explicit `dateFormat` patterns, Gregorian calendar; `calendar:` only sets the timezone. A `Language` with another locale uses that locale's layouts (still Gregorian). Never hard-code an English word in a helper: add it to `Language`. A new `Language` property breaks its public `init`, so give the parameter a default.
 - Numeric inputs go through `clampedSeconds` so NaN/negative/infinite values never trap.
 - Anything using SwiftUI/UIKit stays behind `#if canImport(...)` — CI builds on Linux.
 - Group code in Swift files with `// MARK: - Section` (not `// ----` banners) so Xcode's jump bar shows the sections. Skip it in files with only one group.
